@@ -5,7 +5,7 @@ from flask import render_template
 from flask import abort, redirect, url_for
 import pandas as pd
 import numpy as np
-import MySQLdb.cursors
+import pymysql
 import json
 from datetime import datetime
 from datetime import timedelta
@@ -16,7 +16,7 @@ import xutils
 config = xutils.getLocalConfigJson()
 
 
-pool = PooledDB(creator=MySQLdb,
+pool = PooledDB(creator=pymysql,
             mincached=1,
             maxcached=5,
             host=config['host'],
@@ -25,7 +25,7 @@ pool = PooledDB(creator=MySQLdb,
             passwd=config['password'],
             db=config['db'],
             charset='utf8',
-            cursorclass=MySQLdb.cursors.DictCursor)
+            cursorclass=pymysql.cursors.DictCursor)
 
 app = Flask(__name__)
 
