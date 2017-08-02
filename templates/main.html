@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ECharts</title>
+    <script src="static/echarts.min.js"></script>
+    <script src="static/jquery.min.js"></script>
+</head>
+<body>
+    <div id="main" style="width: 600px;height:400px;"></div>
+
+    <script type="text/javascript">
+        var myChart = echarts.init(document.getElementById('main'));
+
+        $.get('data.json').done(function (data) {
+            myChart.setOption({
+                title: {
+                    text: 'momentum'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data:['BTC','LTC','ETH']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                toolbox: {
+                    feature: {
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: data.dt_lst
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        name:'BTC',
+                        type:'line',
+                        data: data.btc_lst
+                    },
+                    {
+                        name:'LTC',
+                        type:'line',
+                        data: data.ltc_lst
+                    },
+                    {
+                        name:'ETH',
+                        type:'line',
+                        data: data.eth_lst
+                    }
+                ]
+            });
+        });
+    </script>
+</body>
+</html>
