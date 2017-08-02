@@ -17,3 +17,29 @@ def getLocalConfigJson():
     config = json.load(f)
     f.close()
     return config
+
+
+def getLocalConn():
+    config = getLocalConfigJson()
+    conn = pymysql.connect(host=config['host'],
+                                     user=config['user'],
+                                     password=config['password'],
+                                     db=config['db'],
+                                     cursorclass=pymysql.cursors.DictCursor)
+    return conn
+
+
+def buildUpsertOnDuplicateSql(table, field_lst):
+    sql = 'insert into '
+    sql += table
+    sql += ' '
+    sql += '(`'
+    sql += '`, `'.join(field_lst)
+    sql += '`)'
+    sql += ' values '
+    sql += '('
+    sql += ', '.join(['%s'] * len(field_lst))
+    sql += ')'
+    sql += ' on duplicate key update '
+    sql += ', '.join(x + ' = %s' for x in field_lst)
+    return sql
