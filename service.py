@@ -8,7 +8,7 @@ import numpy as np
 import pymysql
 import json
 from datetime import datetime
-from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from DBUtils.PooledDB import PooledDB
 import os
 import xutils
@@ -41,9 +41,11 @@ def get_mmtm_data():
     try:
         codes = ['BTC', 'LTC', 'ETH']
         lst = []
+        today = datetime.now().date()
+
         for code in codes:
-            sql = "select date, mmtm_7 from coin_close where code = %(code)s and date >= '2017-07-01'"
-            df = pd.read_sql(sql, con=conn, params={'code':code})
+            sql = "select date, mmtm_7 from coin_close where code = %(code)s and date >= %(dt)s"
+            df = pd.read_sql(sql, con=conn, params={'code':code, 'dt':today - relativedelta(months=1)})
             df = df.set_index('date')
             df.rename(columns={'mmtm_7': code}, inplace=True)
             lst.append(df[code])
