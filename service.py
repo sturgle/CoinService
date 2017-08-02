@@ -13,8 +13,8 @@ from DBUtils.PooledDB import PooledDB
 import os
 import xutils
 
-config = xutils.getLocalConfigJson()
 
+config = xutils.getLocalConfigJson()
 
 pool = PooledDB(creator=pymysql,
             mincached=1,
@@ -42,7 +42,7 @@ def get_mmtm_data():
         codes = ['BTC', 'LTC', 'ETH']
         lst = []
         for code in codes:
-            sql = "select date, mmtm_7 from test.coin_close where code = %(code)s and date >= '2017-07-01'"
+            sql = "select date, mmtm_7 from coin_close where code = %(code)s and date >= '2017-07-01'"
             df = pd.read_sql(sql, con=conn, params={'code':code})
             df = df.set_index('date')
             df.rename(columns={'mmtm_7': code}, inplace=True)
