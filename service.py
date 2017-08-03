@@ -35,7 +35,7 @@ def hello():
     return render_template('main.html')
 
 
-@app.route("/data.json", methods=['GET'])
+@app.route("/mmtm_data.json", methods=['GET'])
 def get_mmtm_data():
     conn = pool.connection();
     try:
@@ -61,6 +61,27 @@ def get_mmtm_data():
             ltc_lst.append(row['LTC'])
             eth_lst.append(row['ETH'])
         res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'ltc_lst': ltc_lst, 'eth_lst': eth_lst}
+        return jsonify(res)
+    except Exception as ex:
+        print (type(ex), ex)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+@app.route("/bottom_data.json", methods=['GET'])
+def get_low_data():
+    conn = pool.connection();
+    try:
+        codes = ['BTC', 'LTC', 'ETH']
+        bottom_lst = []
+
+        for code in codes:
+            sql = "select * from coin_close where code = %(code)s order by date desc limit 1"
+            df = pd.read_sql(sql, con=conn, params={'code':code})
+            bottom_lst.append(np.round(float(df.iloc[0]['close'] / df.iloc[0]['ma_125'] - 1), 2))
+
+        res = {'bottom_lst': bottom_lst}
         return jsonify(res)
     except Exception as ex:
         print (type(ex), ex)

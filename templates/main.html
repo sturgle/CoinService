@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>ECharts</title>
+    <title>Coin Meta</title>
     <script src="static/echarts.min.js"></script>
     <script src="static/jquery.min.js"></script>
 </head>
@@ -10,10 +10,10 @@
     <div id="main" style="width: 600px;height:400px;"></div>
 
     <script type="text/javascript">
-        var myChart = echarts.init(document.getElementById('main'));
+        var myChart1 = echarts.init(document.getElementById('main'));
 
-        $.get('data.json').done(function (data) {
-            myChart.setOption({
+        $.get('mmtm_data.json').done(function (data) {
+            myChart1.setOption({
                 title: {
                     text: 'momentum'
                 },
@@ -57,6 +57,54 @@
                         name:'ETH',
                         type:'line',
                         data: data.eth_lst
+                    }
+                ]
+            });
+        });
+    </script>
+
+    <div id="main2" style="width: 600px;height:400px;"></div>
+
+    <script type="text/javascript">
+        var myChart2 = echarts.init(document.getElementById('main2'));
+
+        $.get('bottom_data.json').done(function (data) {
+            myChart2.setOption({
+                title: {
+                    text: '-bottom?'
+                },
+                color: ['#3398DB'],
+                tooltip : {
+                    trigger: 'axis',
+                    axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                        type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis : [
+                    {
+                        type : 'category',
+                        data : ['BTC', 'LTC', 'ETH'],
+                        axisTick: {
+                            alignWithLabel: true
+                        }
+                    }
+                ],
+                yAxis : [
+                    {
+                        type : 'value'
+                    }
+                ],
+                series : [
+                    {
+                        type:'bar',
+                        barWidth: '60%',
+                        data: data.bottom_lst
                     }
                 ]
             });
