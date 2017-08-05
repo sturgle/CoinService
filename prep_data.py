@@ -18,9 +18,9 @@ if __name__ == "__main__":
     for code in codes:
         df = quandl.get("BITFINEX/" + code + "USD")
 
-        df['mmtm_7'] = np.log(df['Last'] / df['Last'].shift(7))
+        df['mmtm_7'] = np.log(3 * df['Last'] / (df['Last'].shift(6) + df['Last'].shift(7) + df['Last'].shift(8)))
         df['mmtm_7'] = df['mmtm_7'].fillna(0)
-        df['mmtm_15'] = np.log(df['Last'] / df['Last'].shift(15))
+        df['mmtm_15'] = np.log(3 * df['Last'] / (df['Last'].shift(14) + df['Last'].shift(15) + df['Last'].shift(16)))
         df['mmtm_15'] = df['mmtm_15'].fillna(0)
         df['ma_125'] = talib.SMA(df['Last'].values, 125)
 
