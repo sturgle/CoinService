@@ -35,8 +35,18 @@ def hello():
     return render_template('main.html')
 
 
-@app.route("/mmtm_data.json", methods=['GET'])
-def get_mmtm_data():
+@app.route("/mmtm7_data.json", methods=['GET'])
+def get_mmtm7_data():
+    return get_mmtm_data(7)
+
+
+@app.route("/mmtm15_data.json", methods=['GET'])
+def get_mmtm15_data():
+    return get_mmtm_data(15)
+
+
+def get_mmtm_data(gap):
+    field = 'mmtm_' + str(gap)
     conn = pool.connection();
     try:
         codes = ['BTC', 'LTC', 'ETH']
@@ -44,10 +54,10 @@ def get_mmtm_data():
         today = datetime.now().date()
 
         for code in codes:
-            sql = "select date, mmtm_7 from coin_close where code = %(code)s and date >= %(dt)s"
+            sql = "select date, " + field + " from coin_close where code = %(code)s and date >= %(dt)s"
             df = pd.read_sql(sql, con=conn, params={'code':code, 'dt':today - relativedelta(months=1)})
             df = df.set_index('date')
-            df.rename(columns={'mmtm_7': code}, inplace=True)
+            df.rename(columns={field: code}, inplace=True)
             lst.append(df[code])
 
         df = pd.concat(lst, join='inner', axis=1)

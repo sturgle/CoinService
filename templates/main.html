@@ -7,15 +7,17 @@
     <script src="static/jquery.min.js"></script>
 </head>
 <body>
-    <div id="main" style="width: 600px;height:400px;"></div>
+    <div id="div_mmtm7" style="width: 600px;height:400px;"></div>
+    <div id="div_mmtm15" style="width: 600px;height:400px;"></div>
+    <div id="div_bottom" style="width: 600px;height:400px;"></div>
 
     <script type="text/javascript">
-        var myChart1 = echarts.init(document.getElementById('main'));
+        var myChart1 = echarts.init(document.getElementById('div_mmtm7'));
 
-        $.get('mmtm_data.json').done(function (data) {
+        $.get('mmtm7_data.json').done(function (data) {
             myChart1.setOption({
                 title: {
-                    text: 'momentum'
+                    text: 'momentum - 7d'
                 },
                 tooltip: {
                     trigger: 'axis'
@@ -63,13 +65,65 @@
         });
     </script>
 
-    <div id="main2" style="width: 600px;height:400px;"></div>
+    <script type="text/javascript">
+        var myChart2 = echarts.init(document.getElementById('div_mmtm15'));
+
+        $.get('mmtm15_data.json').done(function (data) {
+            myChart2.setOption({
+                title: {
+                    text: 'momentum - 15d'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data:['BTC','LTC','ETH']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                toolbox: {
+                    feature: {
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: data.dt_lst
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        name:'BTC',
+                        type:'line',
+                        data: data.btc_lst
+                    },
+                    {
+                        name:'LTC',
+                        type:'line',
+                        data: data.ltc_lst
+                    },
+                    {
+                        name:'ETH',
+                        type:'line',
+                        data: data.eth_lst
+                    }
+                ]
+            });
+        });
+    </script>
 
     <script type="text/javascript">
-        var myChart2 = echarts.init(document.getElementById('main2'));
+        var myChart3 = echarts.init(document.getElementById('div_bottom'));
 
         $.get('bottom_data.json').done(function (data) {
-            myChart2.setOption({
+            myChart3.setOption({
                 title: {
                     text: '-bottom?'
                 },
