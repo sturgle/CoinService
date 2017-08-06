@@ -55,7 +55,7 @@ def get_mmtm_data(gap):
 
         for code in codes:
             sql = "select date, " + field + " from coin_close where code = %(code)s and date >= %(dt)s"
-            df = pd.read_sql(sql, con=conn, params={'code':code, 'dt':today - relativedelta(months=1)})
+            df = pd.read_sql(sql, con=conn, params={'code':code, 'dt':today - relativedelta(days=45)})
             df = df.set_index('date')
             df.rename(columns={field: code}, inplace=True)
             lst.append(df[code])
