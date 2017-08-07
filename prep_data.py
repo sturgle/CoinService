@@ -7,6 +7,10 @@ import talib
 import xutils
 
 
+def downsideDeviation(s):
+    return np.sqrt(np.sum((s.where(s < 0)) ** 2) / len(s)) * np.sqrt(252.0)
+
+
 if __name__ == "__main__":
     config = xutils.getLocalConfigJson()
     quandl.ApiConfig.api_key = config['key']
@@ -23,13 +27,19 @@ if __name__ == "__main__":
         df['mmtm_15'] = np.log(3 * df['Last'] / (df['Last'].shift(14) + df['Last'].shift(15) + df['Last'].shift(16)))
         df['mmtm_15'] = df['mmtm_15'].fillna(0)
         df['ma_125'] = talib.SMA(df['Last'].values, 125)
+        df['down_std_60'] = 0.0
+        s = np.log(df['Last'] / df['Last'].shift(1))
+        for i in range(60, len(s)):
+            tmp_s = s[i - 60: i]
+            dd = downsideDeviation(tmp_s)
+            df.loc[s.index[i], 'down_std_60'] = dd
 
-        upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close', 'mmtm_7', 'mmtm_15', 'ma_125'])
+        upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close', 'mmtm_7', 'mmtm_15', 'ma_125', 'down_std_60'])
 
         df = df.tail(15)
 
         for index, row in df.iterrows():
-            cursor.execute(upsert_sql, (code, index.date(), float(row['Last']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['ma_125'])) * 2)
+            cursor.execute(upsert_sql, (code, index.date(), float(row['Last']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['ma_125']), float(row['down_std_60'])) * 2)
 
     conn.commit()
     cursor.close()
