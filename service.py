@@ -45,6 +45,11 @@ def get_mmtm15_data():
     return get_mmtm_data(15)
 
 
+@app.route("/mmtm30_data.json", methods=['GET'])
+def get_mmtm30_data():
+    return get_mmtm_data(30)
+
+
 def get_mmtm_data(gap):
     field = 'mmtm_' + str(gap)
     conn = pool.connection();
