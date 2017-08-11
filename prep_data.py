@@ -41,7 +41,7 @@ if __name__ == "__main__":
         df = df.tail(50)
 
         for index, row in df.iterrows():
-            cursor.execute(upsert_sql, (code, index.date(), float(row['Last']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_15']), float(row['ma_125']), float(row['down_std_60'])) * 2)
+            cursor.execute(upsert_sql, (code, index.date(), float(row['Last']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_30']), float(row['ma_125']), float(row['down_std_60'])) * 2)
 
     conn.commit()
     cursor.close()
