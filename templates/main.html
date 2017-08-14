@@ -7,16 +7,86 @@
     <script src="static/jquery.min.js"></script>
 </head>
 <body>
+    <div id="div_pick" style="width: 600px;height:400px;"></div>
     <div id="div_mmtm7" style="width: 600px;height:400px;"></div>
-    <!-- <div id="div_mmtm15" style="width: 600px;height:400px;"></div> -->
     <div id="div_mmtm30" style="width: 600px;height:400px;"></div>
-    <div id="div_bottom" style="width: 600px;height:400px;"></div>
+    <!-- <div id="div_bottom" style="width: 600px;height:400px;"></div> -->
 
     <script type="text/javascript">
-        var myChart1 = echarts.init(document.getElementById('div_mmtm7'));
+        var myChartPick = echarts.init(document.getElementById('div_pick'));
+
+        $.get('pick_data.json').done(function (data) {
+            myChartPick.setOption({
+                title: {
+                    text: '币种选择图 - 90d'
+                },
+                tooltip : {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        label: {
+                            backgroundColor: '#6a7985'
+                        }
+                    }
+                },
+                legend: {
+                    data:['BTC','LTC','ETH']
+                },
+                toolbox: {
+                    feature: {
+                        saveAsImage: {}
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis : [
+                    {
+                        type : 'category',
+                        boundaryGap : false,
+                        data : data.dt_lst
+                    }
+                ],
+                yAxis : [
+                    {
+                        type : 'value'
+                    }
+                ],
+                series : [
+                    {
+                        name:'BTC',
+                        type:'line',
+                        stack: '总量',
+                        areaStyle: {normal: {}},
+                        data: data.btc_lst
+                    },
+                    {
+                        name:'LTC',
+                        type:'line',
+                        stack: '总量',
+                        areaStyle: {normal: {}},
+                        data: data.ltc_lst
+                    },
+                    {
+                        name:'ETH',
+                        type:'line',
+                        stack: '总量',
+                        areaStyle: {normal: {}},
+                        data: data.eth_lst
+                    }
+                ]
+            });
+        });
+    </script>
+
+    <script type="text/javascript">
+        var myChartMmtm7 = echarts.init(document.getElementById('div_mmtm7'));
 
         $.get('mmtm7_data.json').done(function (data) {
-            myChart1.setOption({
+            myChartMmtm7.setOption({
                 title: {
                     text: 'momentum - 7d'
                 },
@@ -66,65 +136,11 @@
         });
     </script>
 
-    <!-- <script type="text/javascript">
-        var myChart2 = echarts.init(document.getElementById('div_mmtm15'));
-
-        $.get('mmtm15_data.json').done(function (data) {
-            myChart2.setOption({
-                title: {
-                    text: 'momentum - 15d'
-                },
-                tooltip: {
-                    trigger: 'axis'
-                },
-                legend: {
-                    data:['BTC','LTC','ETH']
-                },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '3%',
-                    containLabel: true
-                },
-                toolbox: {
-                    feature: {
-                        saveAsImage: {}
-                    }
-                },
-                xAxis: {
-                    type: 'category',
-                    boundaryGap: false,
-                    data: data.dt_lst
-                },
-                yAxis: {
-                    type: 'value'
-                },
-                series: [
-                    {
-                        name:'BTC',
-                        type:'line',
-                        data: data.btc_lst
-                    },
-                    {
-                        name:'LTC',
-                        type:'line',
-                        data: data.ltc_lst
-                    },
-                    {
-                        name:'ETH',
-                        type:'line',
-                        data: data.eth_lst
-                    }
-                ]
-            });
-        });
-    </script> -->
-
     <script type="text/javascript">
-        var myChart3 = echarts.init(document.getElementById('div_mmtm30'));
+        var myChartMmtm30 = echarts.init(document.getElementById('div_mmtm30'));
 
         $.get('mmtm30_data.json').done(function (data) {
-            myChart3.setOption({
+            myChartMmtm30.setOption({
                 title: {
                     text: 'momentum - 30d'
                 },
@@ -174,7 +190,7 @@
         });
     </script>
 
-    <script type="text/javascript">
+    <!-- <script type="text/javascript">
         var myChart4 = echarts.init(document.getElementById('div_bottom'));
 
         $.get('bottom_data.json').done(function (data) {
@@ -218,6 +234,6 @@
                 ]
             });
         });
-    </script>
+    </script> -->
 </body>
 </html>

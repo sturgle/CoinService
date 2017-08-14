@@ -84,6 +84,43 @@ def get_mmtm_data(gap):
             conn.close()
 
 
+@app.route("/pick_data.json", methods=['GET'])
+def get_pick_date():
+    conn = pool.connection();
+    try:
+        codes = ['BTC', 'LTC', 'ETH']
+        today = datetime.now().date()
+        sql = "select date, pick from coin_pick where date >= %(dt)s order by date"
+        df = pd.read_sql(sql, con=conn, params={'dt':today - relativedelta(days=90)})
+        df = df.set_index('date')
+        dt_lst = []
+        btc_lst = []
+        ltc_lst = []
+        eth_lst = []
+
+        for index, row in df.iterrows():
+            dt_lst.append(index)
+            btc_x = 0
+            ltc_x = 0
+            eth_x = 0
+            if row['pick'] == 'BTC':
+                btc_x = 1
+            if row['pick'] == 'LTC':
+                ltc_x = 1
+            if row['pick'] == 'ETH':
+                eth_x = 1
+            btc_lst.append(btc_x)
+            ltc_lst.append(ltc_x)
+            eth_lst.append(eth_x)
+
+        res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'ltc_lst': ltc_lst, 'eth_lst': eth_lst}
+        return jsonify(res)
+    except Exception as ex:
+        print (type(ex), ex)
+    finally:
+        if conn is not None:
+            conn.close()
+
 @app.route("/bottom_data.json", methods=['GET'])
 def get_low_data():
     conn = pool.connection();
@@ -103,3 +140,4 @@ def get_low_data():
     finally:
         if conn is not None:
             conn.close()
+
