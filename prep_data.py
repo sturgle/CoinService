@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_pick', ['date', 'pick'])
 
-    # df = df.tail(50)
+    df = df.tail(50)
 
     for index, row in df.iterrows():
         cursor.execute(upsert_sql, (index.date(), row['pick']) * 2)
