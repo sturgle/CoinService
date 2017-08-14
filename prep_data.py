@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import quandl
+import pandas as pd
 import numpy as np
 import pymysql
 import talib
@@ -19,8 +20,10 @@ if __name__ == "__main__":
     cursor = conn.cursor()
 
     codes = ['BTC', 'LTC', 'ETH']
+    s_lst = []
     for code in codes:
         df = quandl.get("BITFINEX/" + code + "USD")
+        s_lst.append(df['Last'])
 
         df['mmtm_7'] = np.log(3 * df['Last'] / (df['Last'].shift(6) + df['Last'].shift(7) + df['Last'].shift(8)))
         df['mmtm_7'] = df['mmtm_7'].fillna(0)
@@ -44,5 +47,73 @@ if __name__ == "__main__":
             cursor.execute(upsert_sql, (code, index.date(), float(row['Last']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_30']), float(row['ma_125']), float(row['down_std_60'])) * 2)
 
     conn.commit()
+
+    # 选择今日币种
+    df = pd.concat(s_lst, axis=1)
+    df.columns = codes
+
+    for code in codes:
+        df[code + 'mmtm7'] = np.log(df[code] / (df[code].shift(6) + df[code].shift(7) + df[code].shift(8)) * 3)
+        df[code + 'mmtm30'] = np.log(df[code] / (df[code].shift(29) + df[code].shift(30) + df[code].shift(31)) * 3)
+        df[code + 'mmtm7'] = df[code + 'mmtm7'].fillna(0)
+        df[code + 'mmtm30'] = df[code + 'mmtm30'].fillna(0)
+
+    last_pick = None
+    cnt = 0
+    for index, row in df.iterrows():
+        pick = None
+        mmtm7_lst = []
+        mmtm30_lst = []
+        for code in codes:
+            if row[code + 'mmtm7'] > 0:
+                mmtm7_lst.append(row[code + 'mmtm7'])
+            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0:
+                mmtm30_lst.append(row[code + 'mmtm30'])
+        if len(mmtm7_lst) == 0:
+            pass
+        elif last_pick is None:
+            if len(mmtm30_lst) != 0:
+                for code in codes:
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst):
+                        pick = code
+                        break
+        elif row[last_pick + 'mmtm7'] < 0:
+            if len(mmtm30_lst) != 0:
+                for code in codes:
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst):
+                        pick = code
+                        break
+        else:
+            pick = last_pick
+            # 试一下择强
+            if len(mmtm7_lst) != 0 and len(mmtm30_lst) != 0:
+                pick_7 = None
+                pick_30 = None
+                for code in codes:
+                    if row[code + 'mmtm7'] == np.max(mmtm7_lst):
+                        pick_7 = code
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst):
+                        pick_30 = code
+
+                if pick_7 == pick_30:
+                    pick = pick_7
+            
+
+        if pick == last_pick:
+            pass
+        else:
+            cnt += 1
+        df.loc[index, 'pick'] = str(pick)
+        last_pick = pick
+
+    upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_pick', ['date', 'pick'])
+
+    # df = df.tail(50)
+
+    for index, row in df.iterrows():
+        cursor.execute(upsert_sql, (index.date(), row['pick']) * 2)
+
+    conn.commit()
+
     cursor.close()
     conn.close()
