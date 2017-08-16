@@ -55,8 +55,10 @@ if __name__ == "__main__":
     for code in codes:
         df[code + 'mmtm7'] = np.log(df[code] / (df[code].shift(6) + df[code].shift(7) + df[code].shift(8)) * 3)
         df[code + 'mmtm30'] = np.log(df[code] / (df[code].shift(29) + df[code].shift(30) + df[code].shift(31)) * 3)
+        df[code + 'bbi'] = (pd.rolling_mean(df[code], 7, 7) + pd.rolling_mean(df[code], 15, 15) + pd.rolling_mean(df[code], 30, 30) + pd.rolling_mean(df[code], 60, 60)) / 4
         df[code + 'mmtm7'] = df[code + 'mmtm7'].fillna(0)
         df[code + 'mmtm30'] = df[code + 'mmtm30'].fillna(0)
+        df[code + 'bbi'] = df[code + 'bbi'].fillna(0)
 
     last_pick = None
     cnt = 0
@@ -74,7 +76,7 @@ if __name__ == "__main__":
         elif last_pick is None:
             if len(mmtm30_lst) != 0:
                 for code in codes:
-                    if row[code + 'mmtm30'] == np.max(mmtm30_lst):
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'bbi']:
                         pick = code
                         break
         elif row[last_pick + 'mmtm7'] < 0:
