@@ -50,6 +50,7 @@ if __name__ == "__main__":
 
     # 选择今日币种
     df = pd.concat(s_lst, axis=1)
+    df = df.fillna(method='ffill')
     df.columns = codes
 
     for code in codes:
