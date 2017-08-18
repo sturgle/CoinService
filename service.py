@@ -52,6 +52,15 @@ def get_mmtm30_data():
 
 def get_mmtm_data(gap):
     field = 'mmtm_' + str(gap)
+    return get_field_data(field)
+
+
+@app.route("/dd_data.json", methods=['GET'])
+def get_dd_data():
+    return get_field_data('down_std_60')
+
+
+def get_field_data(field):
     conn = pool.connection();
     try:
         codes = ['BTC', 'LTC', 'ETH']
