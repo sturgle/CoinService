@@ -32,7 +32,7 @@ if __name__ == "__main__":
     for code in codes:
         print ('Get Close', code)
         url_code = codes[code]
-        url = 'https://coinmarketcap.com/currencies/' + url_code + '/historical-data/?start=20130428&end=20170818'
+        url = 'https://coinmarketcap.com/currencies/' + url_code + '/historical-data'
 
         page_src = requests.get(url).text
         soup = bs4.BeautifulSoup(page_src, 'html.parser')
