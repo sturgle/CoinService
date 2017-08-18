@@ -35,7 +35,7 @@ if __name__ == "__main__":
         df['down_std_60'] = 0.0
         s = np.log(df['Last'] / df['Last'].shift(1))
         for i in range(60, len(s)):
-            tmp_s = s[i - 60: i]
+            tmp_s = s[i - 60 + 1: i + 1]
             dd = downsideDeviation(tmp_s)
             df.loc[s.index[i], 'down_std_60'] = dd
 
@@ -56,10 +56,18 @@ if __name__ == "__main__":
     for code in codes:
         df[code + 'mmtm7'] = np.log(df[code] / (df[code].shift(6) + df[code].shift(7) + df[code].shift(8)) * 3)
         df[code + 'mmtm30'] = np.log(df[code] / (df[code].shift(29) + df[code].shift(30) + df[code].shift(31)) * 3)
-        df[code + 'bbi'] = (pd.rolling_mean(df[code], 7, 7) + pd.rolling_mean(df[code], 15, 15) + pd.rolling_mean(df[code], 30, 30) + pd.rolling_mean(df[code], 60, 60)) / 4
+        # df[code + 'bbi'] = (pd.rolling_mean(df[code], 7, 7) + pd.rolling_mean(df[code], 15, 15) + pd.rolling_mean(df[code], 30, 30) + pd.rolling_mean(df[code], 60, 60)) / 4
         df[code + 'mmtm7'] = df[code + 'mmtm7'].fillna(0)
         df[code + 'mmtm30'] = df[code + 'mmtm30'].fillna(0)
-        df[code + 'bbi'] = df[code + 'bbi'].fillna(0)
+        # df[code + 'bbi'] = df[code + 'bbi'].fillna(0)
+
+        s = np.log(df[code] / df[code].shift(1))
+    
+        df[code + 'dd60'] = 0.0
+        for i in range(60, len(s)):
+            tmp_s = s[i - 60 + 1: i + 1]
+            dd = downsideDeviation(tmp_s)
+            df.loc[s.index[i], code + 'dd60'] = dd
 
     last_pick = None
     cnt = 0
@@ -68,16 +76,16 @@ if __name__ == "__main__":
         mmtm7_lst = []
         mmtm30_lst = []
         for code in codes:
-            if row[code + 'mmtm7'] > 0:
+            if row[code + 'mmtm7'] > 0 and row[code + 'dd60'] < 0.75:
                 mmtm7_lst.append(row[code + 'mmtm7'])
-            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0:
+            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd60'] < 0.75:
                 mmtm30_lst.append(row[code + 'mmtm30'])
         if len(mmtm7_lst) == 0:
             pass
         elif last_pick is None:
             if len(mmtm30_lst) != 0:
                 for code in codes:
-                    if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'bbi']:
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst):
                         pick = code
                         break
         elif row[last_pick + 'mmtm7'] < 0:
