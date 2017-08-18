@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-import quandl
 import pandas as pd
 import numpy as np
 import pymysql
-import talib
+import requests
+import json
+import bs4
+import time
+import sys
+from datetime import datetime
 
 import xutils
 
@@ -14,37 +18,68 @@ def downsideDeviation(s):
 
 if __name__ == "__main__":
     config = xutils.getLocalConfigJson()
-    quandl.ApiConfig.api_key = config['key']
 
     conn = xutils.getLocalConn()
     cursor = conn.cursor()
 
-    codes = ['BTC', 'LTC', 'ETH']
+    codes = {
+        'BTC': 'bitcoin',
+        'LTC': 'litecoin',
+        'ETH': 'ethereum'
+    }
+
+
+    for code in codes:
+        print ('Get Close', code)
+        url_code = codes[code]
+        url = 'https://coinmarketcap.com/currencies/' + url_code + '/historical-data/?start=20130428&end=20170818'
+
+        page_src = requests.get(url).text
+        soup = bs4.BeautifulSoup(page_src, 'html.parser')
+        div = soup.find('div', {'id':'historical-data'})
+        table = div.find('table')
+        table_body = table.find('tbody')
+        data = []
+        rows = table_body.find_all('tr')
+        for row in rows:
+            cols = row.find_all('td')
+            cols = [ele.text.strip() for ele in cols]
+            data.append([ele for ele in cols if ele]) # Get rid of empty values
+
+        upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close'])
+
+        for row in data:
+            dt = datetime.strptime(row[0], '%b %d, %Y')
+            cursor.execute(upsert_sql, (code, dt.date(), float(row[4])) * 2)
+        conn.commit()
+        time.sleep(3)
+
     s_lst = []
     for code in codes:
-        df = quandl.get("BITFINEX/" + code + "USD")
-        s_lst.append(df['Last'])
+        sql = "select date, close from coin_close where code = %(code)s order by date"
+        df = pd.read_sql(sql, con=conn, params={'code':code})
+        df = df.set_index('date')
+        s_lst.append(df['close'])
 
-        df['mmtm_7'] = np.log(3 * df['Last'] / (df['Last'].shift(6) + df['Last'].shift(7) + df['Last'].shift(8)))
+        df['mmtm_7'] = np.log(3 * df['close'] / (df['close'].shift(6) + df['close'].shift(7) + df['close'].shift(8)))
         df['mmtm_7'] = df['mmtm_7'].fillna(0)
-        df['mmtm_15'] = np.log(3 * df['Last'] / (df['Last'].shift(14) + df['Last'].shift(15) + df['Last'].shift(16)))
+        df['mmtm_15'] = np.log(3 * df['close'] / (df['close'].shift(14) + df['close'].shift(15) + df['close'].shift(16)))
         df['mmtm_15'] = df['mmtm_15'].fillna(0)
-        df['mmtm_30'] = np.log(3 * df['Last'] / (df['Last'].shift(29) + df['Last'].shift(30) + df['Last'].shift(31)))
+        df['mmtm_30'] = np.log(3 * df['close'] / (df['close'].shift(29) + df['close'].shift(30) + df['close'].shift(31)))
         df['mmtm_30'] = df['mmtm_30'].fillna(0)
-        df['ma_125'] = talib.SMA(df['Last'].values, 125)
         df['down_std_60'] = 0.0
-        s = np.log(df['Last'] / df['Last'].shift(1))
+        s = np.log(df['close'] / df['close'].shift(1))
         for i in range(60, len(s)):
             tmp_s = s[i - 60 + 1: i + 1]
             dd = downsideDeviation(tmp_s)
             df.loc[s.index[i], 'down_std_60'] = dd
 
-        upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close', 'mmtm_7', 'mmtm_15', 'mmtm_30', 'ma_125', 'down_std_60'])
+        upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close', 'mmtm_7', 'mmtm_15', 'mmtm_30', 'down_std_60'])
 
         df = df.tail(50)
 
         for index, row in df.iterrows():
-            cursor.execute(upsert_sql, (code, index.date(), float(row['Last']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_30']), float(row['ma_125']), float(row['down_std_60'])) * 2)
+            cursor.execute(upsert_sql, (code, index, float(row['close']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_30']), float(row['down_std_60'])) * 2)
 
     conn.commit()
 
@@ -122,7 +157,7 @@ if __name__ == "__main__":
     df = df.tail(50)
 
     for index, row in df.iterrows():
-        cursor.execute(upsert_sql, (index.date(), row['pick']) * 2)
+        cursor.execute(upsert_sql, (index, row['pick']) * 2)
 
     conn.commit()
 
