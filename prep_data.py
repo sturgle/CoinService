@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import quandl
 import pandas as pd
 import numpy as np
 import pymysql
@@ -22,37 +23,23 @@ if __name__ == "__main__":
     conn = xutils.getLocalConn()
     cursor = conn.cursor()
 
-    codes = {
-        'BTC': 'bitcoin',
-        'LTC': 'litecoin',
-        'ETH': 'ethereum'
-    }
+    codes = ['BTC', 'LTC', 'ETH']
+
+    quandl.ApiConfig.api_key = config['key']
 
 
     for code in codes:
         print ('Get Close', code)
-        url_code = codes[code]
-        url = 'https://coinmarketcap.com/currencies/' + url_code + '/historical-data'
-
-        page_src = requests.get(url).text
-        soup = bs4.BeautifulSoup(page_src, 'html.parser')
-        div = soup.find('div', {'id':'historical-data'})
-        table = div.find('table')
-        table_body = table.find('tbody')
-        data = []
-        rows = table_body.find_all('tr')
-        for row in rows:
-            cols = row.find_all('td')
-            cols = [ele.text.strip() for ele in cols]
-            data.append([ele for ele in cols if ele]) # Get rid of empty values
+        df = quandl.get("BITFINEX/" + code + "USD")
 
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close'])
 
-        for row in data:
-            dt = datetime.strptime(row[0], '%b %d, %Y')
-            cursor.execute(upsert_sql, (code, dt.date(), float(row[4])) * 2)
+        # df = df.tail(50)
+
+        for index, row in df.iterrows():
+            cursor.execute(upsert_sql, (code, index.date(), float(row['Last'])) * 2)
         conn.commit()
-        time.sleep(3)
+        time.sleep(1)
 
     s_lst = []
     for code in codes:
@@ -76,7 +63,7 @@ if __name__ == "__main__":
 
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close', 'mmtm_7', 'mmtm_15', 'mmtm_30', 'down_std_60'])
 
-        df = df.tail(50)
+        # df = df.tail(50)
 
         for index, row in df.iterrows():
             cursor.execute(upsert_sql, (code, index, float(row['close']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_30']), float(row['down_std_60'])) * 2)
@@ -154,7 +141,7 @@ if __name__ == "__main__":
 
     upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_pick', ['date', 'pick'])
 
-    df = df.tail(50)
+    # df = df.tail(50)
 
     for index, row in df.iterrows():
         cursor.execute(upsert_sql, (index, row['pick']) * 2)
