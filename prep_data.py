@@ -20,6 +20,8 @@ def downsideDeviation(s):
 if __name__ == "__main__":
     config = xutils.getLocalConfigJson()
 
+    DD_LAG = 45
+
     conn = xutils.getLocalConn()
     cursor = conn.cursor()
 
@@ -56,8 +58,8 @@ if __name__ == "__main__":
         df['mmtm_30'] = df['mmtm_30'].fillna(0)
         df['down_std_60'] = 0.0
         s = np.log(df['close'] / df['close'].shift(1))
-        for i in range(60, len(s)):
-            tmp_s = s[i - 60 + 1: i + 1]
+        for i in range(DD_LAG, len(s)):
+            tmp_s = s[i - DD_LAG + 1: i + 1]
             dd = downsideDeviation(tmp_s)
             df.loc[s.index[i], 'down_std_60'] = dd
 
@@ -86,21 +88,22 @@ if __name__ == "__main__":
         s = np.log(df[code] / df[code].shift(1))
     
         df[code + 'dd60'] = 0.0
-        for i in range(60, len(s)):
-            tmp_s = s[i - 60 + 1: i + 1]
+        for i in range(DD_LAG, len(s)):
+            tmp_s = s[i - DD_LAG + 1: i + 1]
             dd = downsideDeviation(tmp_s)
             df.loc[s.index[i], code + 'dd60'] = dd
 
     last_pick = None
     cnt = 0
+    dd_bar = 0.75
     for index, row in df.iterrows():
         pick = None
         mmtm7_lst = []
         mmtm30_lst = []
         for code in codes:
-            if row[code + 'mmtm7'] > 0 and row[code + 'dd60'] < 0.75:
+            if row[code + 'mmtm7'] > 0 and row[code + 'dd60'] < dd_bar:
                 mmtm7_lst.append(row[code + 'mmtm7'])
-            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd60'] < 0.75:
+            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd60'] < dd_bar:
                 mmtm30_lst.append(row[code + 'mmtm30'])
         if len(mmtm7_lst) == 0:
             pass
