@@ -9,6 +9,7 @@ import bs4
 import time
 import sys
 from datetime import datetime
+import talib
 
 import xutils
 
@@ -84,6 +85,8 @@ if __name__ == "__main__":
         df[code + 'mmtm7'] = df[code + 'mmtm7'].fillna(0)
         df[code + 'mmtm30'] = df[code + 'mmtm30'].fillna(0)
         # df[code + 'bbi'] = df[code + 'bbi'].fillna(0)
+        df[code + 'rsi'] = talib.RSI(df[code].values, 15)
+        df[code + 'rsi'] = df[code + 'rsi'].fillna(0)
 
         s = np.log(df[code] / df[code].shift(1))
     
@@ -96,14 +99,15 @@ if __name__ == "__main__":
     last_pick = None
     cnt = 0
     dd_bar = 0.75
+    rsi_bar = 90
     for index, row in df.iterrows():
         pick = None
         mmtm7_lst = []
         mmtm30_lst = []
         for code in codes:
-            if row[code + 'mmtm7'] > 0 and row[code + 'dd60'] < dd_bar:
+            if row[code + 'mmtm7'] > 0 and row[code + 'dd60'] < dd_bar and row[code + 'rsi'] < rsi_bar:
                 mmtm7_lst.append(row[code + 'mmtm7'])
-            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd60'] < dd_bar:
+            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd60'] < dd_bar and row[code + 'rsi'] < rsi_bar:
                 mmtm30_lst.append(row[code + 'mmtm30'])
         if len(mmtm7_lst) == 0:
             pass
