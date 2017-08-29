@@ -88,6 +88,9 @@ if __name__ == "__main__":
         df[code + 'rsi'] = talib.RSI(df[code].values, 15)
         df[code + 'rsi'] = df[code + 'rsi'].fillna(0)
 
+        df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30)
+        df[code + 'ma'] = df[code + 'ma'].fillna(0)
+
         s = np.log(df[code] / df[code].shift(1))
     
         df[code + 'dd60'] = 0.0
@@ -114,13 +117,13 @@ if __name__ == "__main__":
         elif last_pick is None:
             if len(mmtm30_lst) != 0:
                 for code in codes:
-                    if row[code + 'mmtm30'] == np.max(mmtm30_lst):
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'ma']:
                         pick = code
                         break
         elif row[last_pick + 'mmtm7'] < 0:
             if len(mmtm30_lst) != 0:
                 for code in codes:
-                    if row[code + 'mmtm30'] == np.max(mmtm30_lst):
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'ma']:
                         pick = code
                         break
         else:
@@ -135,7 +138,7 @@ if __name__ == "__main__":
                     if row[code + 'mmtm30'] == np.max(mmtm30_lst):
                         pick_30 = code
 
-                if pick_7 == pick_30:
+                if pick_7 == pick_30  and row[code] >= row[pick_7 + 'ma']:
                     pick = pick_7
             
 
