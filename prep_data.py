@@ -78,6 +78,9 @@ if __name__ == "__main__":
     df = df.fillna(method='ffill')
     df.columns = codes
 
+    df['masig'] = 0
+    df['cnt'] = 0
+
     for code in codes:
         df[code + 'mmtm7'] = np.log(df[code] / (df[code].shift(6) + df[code].shift(7) + df[code].shift(8)) * 3)
         df[code + 'mmtm30'] = np.log(df[code] / (df[code].shift(29) + df[code].shift(30) + df[code].shift(31)) * 3)
@@ -91,13 +94,31 @@ if __name__ == "__main__":
         df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30)
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
+        df[code + 'ma90'] = pd.rolling_mean(df[code], 90, 90)
+        df[code + 'ma90'] = df[code + 'ma90'].fillna(0)
+
         s = np.log(df[code] / df[code].shift(1))
     
-        df[code + 'dd60'] = 0.0
+        df[code + 'dd'] = 0.0
         for i in range(DD_LAG, len(s)):
             tmp_s = s[i - DD_LAG + 1: i + 1]
             dd = downsideDeviation(tmp_s)
-            df.loc[s.index[i], code + 'dd60'] = dd
+            df.loc[s.index[i], code + 'dd'] = dd
+
+            if df.iloc[i][code] > df.iloc[i][code + 'ma90']:
+                df.loc[s.index[i], 'masig'] = df.loc[s.index[i], 'masig'] + 1
+
+            if df.iloc[i][code] >= 0:
+                df.loc[s.index[i], 'cnt'] = df.loc[s.index[i], 'cnt'] + 1
+
+    sig = 0
+    df['sig'] = 0
+    for index, row in df.iterrows():
+        if row['cnt'] == row['masig']:
+            sig = 1
+        elif row['masig'] == 0:
+            sig = 0
+        df.loc[index, 'sig'] = sig
 
     last_pick = None
     cnt = 0
@@ -108,9 +129,9 @@ if __name__ == "__main__":
         mmtm7_lst = []
         mmtm30_lst = []
         for code in codes:
-            if row[code + 'mmtm7'] > 0 and row[code + 'dd60'] < dd_bar and row[code + 'rsi'] < rsi_bar:
+            if row[code + 'mmtm7'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
                 mmtm7_lst.append(row[code + 'mmtm7'])
-            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd60'] < dd_bar and row[code + 'rsi'] < rsi_bar:
+            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
                 mmtm30_lst.append(row[code + 'mmtm30'])
         if len(mmtm7_lst) == 0:
             pass
@@ -149,12 +170,12 @@ if __name__ == "__main__":
         df.loc[index, 'pick'] = str(pick)
         last_pick = pick
 
-    upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_pick', ['date', 'pick'])
+    upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_pick', ['date', 'pick', 'bull'])
 
     # df = df.tail(50)
 
     for index, row in df.iterrows():
-        cursor.execute(upsert_sql, (index, row['pick']) * 2)
+        cursor.execute(upsert_sql, (index, row['pick'], row['sig']) * 2)
 
     conn.commit()
 
