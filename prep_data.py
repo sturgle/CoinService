@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     for code in codes:
         print ('Get Close', code)
-        df = quandl.get("BITFINEX/" + code + "USD")
+        df = quandl.get("BITFINEX/" + code + "USD", rows=50)
 
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close'])
 
@@ -94,8 +94,8 @@ if __name__ == "__main__":
         df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30)
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
-        df[code + 'ma90'] = pd.rolling_mean(df[code], 90, 90)
-        df[code + 'ma90'] = df[code + 'ma90'].fillna(0)
+        df[code + 'xma'] = pd.rolling_mean(df[code], 180, 180)
+        df[code + 'xma'] = df[code + 'xma'].fillna(0)
 
         s = np.log(df[code] / df[code].shift(1))
     
@@ -105,7 +105,7 @@ if __name__ == "__main__":
             dd = downsideDeviation(tmp_s)
             df.loc[s.index[i], code + 'dd'] = dd
 
-            if df.iloc[i][code] > df.iloc[i][code + 'ma90']:
+            if df.iloc[i][code] > df.iloc[i][code + 'xma']:
                 df.loc[s.index[i], 'masig'] = df.loc[s.index[i], 'masig'] + 1
 
             if df.iloc[i][code] >= 0:
