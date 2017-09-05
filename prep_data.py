@@ -64,6 +64,10 @@ if __name__ == "__main__":
         df['mmtm_15'] = df['mmtm_15'].fillna(0)
         df['mmtm_30'] = np.log(3 * df['close'] / (df['close'].shift(29) + df['close'].shift(30) + df['close'].shift(31)))
         df['mmtm_30'] = df['mmtm_30'].fillna(0)
+
+        df['rsi_15'] = talib.RSI(df['close'].values, 15)
+        df['rsi_15'] = df['rsi_15'].fillna(0)
+
         df['down_std_60'] = 0.0
         s = np.log(df['close'] / df['close'].shift(1))
         for i in range(DD_LAG, len(s)):
@@ -71,12 +75,12 @@ if __name__ == "__main__":
             dd = downsideDeviation(tmp_s)
             df.loc[s.index[i], 'down_std_60'] = dd
 
-        upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close', 'mmtm_7', 'mmtm_15', 'mmtm_30', 'down_std_60'])
+        upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close', 'mmtm_7', 'mmtm_15', 'mmtm_30', 'rsi_15', 'down_std_60'])
 
         # df = df.tail(50)
 
         for index, row in df.iterrows():
-            cursor.execute(upsert_sql, (code, index, float(row['close']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_30']), float(row['down_std_60'])) * 2)
+            cursor.execute(upsert_sql, (code, index, float(row['close']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_30']), float(row['rsi_15']), float(row['down_std_60'])) * 2)
 
     conn.commit()
 

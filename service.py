@@ -60,6 +60,11 @@ def get_dd_data():
     return get_field_data('down_std_60')
 
 
+@app.route("/rsi_data.json", methods=['GET'])
+def get_rsi_data():
+    return get_field_data('rsi_15')
+
+
 def get_field_data(field):
     conn = pool.connection();
     try:
