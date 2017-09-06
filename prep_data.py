@@ -108,6 +108,8 @@ if __name__ == "__main__":
         df[code + 'xma'] = pd.rolling_mean(df[code], 180, 180)
         df[code + 'xma'] = df[code + 'xma'].fillna(0)
 
+        df[code + 'mmtm1'] = np.log(df[code] / df[code].shift(1))
+
         s = np.log(df[code] / df[code].shift(1))
     
         df[code + 'dd'] = 0.0
@@ -140,6 +142,10 @@ if __name__ == "__main__":
         mmtm7_lst = []
         mmtm30_lst = []
         for code in codes:
+            stoploss_bar = -0.15
+            if row[code + 'mmtm1'] < stoploss_bar:
+                continue
+
             if row[code + 'mmtm7'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
                 mmtm7_lst.append(row[code + 'mmtm7'])
             if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
