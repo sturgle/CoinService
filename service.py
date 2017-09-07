@@ -29,6 +29,8 @@ pool = PooledDB(creator=pymysql,
 
 app = Flask(__name__)
 
+lag_days = 60
+
 
 @app.route('/')
 def hello():
@@ -73,8 +75,9 @@ def get_field_data(field):
         today = datetime.now().date()
 
         for code in codes:
-            sql = "select date, " + field + " from coin_close where code = %(code)s and date >= %(dt)s"
-            df = pd.read_sql(sql, con=conn, params={'code':code, 'dt':today - relativedelta(days=45)})
+            sql = "select date, " + field + " from coin_close where code = %(code)s and date >= %(s_dt)s and date <= %(e_dt)s order by date"
+            df = pd.read_sql(sql, con=conn, params={'code':code, 's_dt':today - relativedelta(days=lag_days), 'e_dt': today - relativedelta(days=0)})
+
             df = df.set_index('date')
             df.rename(columns={field: code}, inplace=True)
             lst.append(df[code])
@@ -104,8 +107,8 @@ def get_pick_date():
     try:
         codes = ['BTC', 'LTC', 'ETH']
         today = datetime.now().date()
-        sql = "select date, pick from coin_pick where date >= %(dt)s order by date"
-        df = pd.read_sql(sql, con=conn, params={'dt':today - relativedelta(days=90)})
+        sql = "select date, pick from coin_pick where date >= %(s_dt)s and date <= %(e_dt)s order by date"
+        df = pd.read_sql(sql, con=conn, params={'s_dt':today - relativedelta(days=lag_days), 'e_dt': today - relativedelta(days=0)})
         df = df.set_index('date')
         dt_lst = []
         btc_lst = []
@@ -135,19 +138,22 @@ def get_pick_date():
         if conn is not None:
             conn.close()
 
-@app.route("/bottom_data.json", methods=['GET'])
-def get_low_data():
+@app.route("/bullbear_data.json", methods=['GET'])
+def get_bb_date():
     conn = pool.connection();
     try:
-        codes = ['BTC', 'LTC', 'ETH']
-        bottom_lst = []
+        today = datetime.now().date()
+        sql = "select date, bull from coin_pick where date >= %(dt)s order by date"
+        df = pd.read_sql(sql, con=conn, params={'dt':today - relativedelta(days=lag_days)})
+        df = df.set_index('date')
+        dt_lst = []
+        bb_lst = []
 
-        for code in codes:
-            sql = "select * from coin_close where code = %(code)s order by date desc limit 1"
-            df = pd.read_sql(sql, con=conn, params={'code':code})
-            bottom_lst.append(np.round(float(df.iloc[0]['close'] / df.iloc[0]['ma_125'] - 1), 2))
+        for index, row in df.iterrows():
+            dt_lst.append(index)
+            bb_lst.append(row['bull'])
 
-        res = {'bottom_lst': bottom_lst}
+        res = {'dt_lst': dt_lst, 'bb_lst': bb_lst}
         return jsonify(res)
     except Exception as ex:
         print (type(ex), ex)

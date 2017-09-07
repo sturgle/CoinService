@@ -12,6 +12,7 @@
     <div id="div_mmtm30" style="width: 600px;height:400px;"></div>
     <div id="div_dd" style="width: 600px;height:400px;"></div>
     <div id="div_rsi" style="width: 600px;height:400px;"></div>
+    <div id="div_bullbear" style="width: 600px;height:400px;"></div>
 
     <script type="text/javascript">
         var myChartPick = echarts.init(document.getElementById('div_pick'));
@@ -297,7 +298,51 @@
             ]
         });
     });
-</script>
+    </script>
+
+<script type="text/javascript">
+    var myChartBullBear = echarts.init(document.getElementById('div_bullbear'));
+
+    $.get('bullbear_data.json').done(function (data) {
+        myChartBullBear.setOption({
+            title: {
+                text: '牛熊市'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data:['牛熊市']
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: data.dt_lst
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series : [
+                {
+                    name:'牛熊市',
+                    type:'line',
+                    data: data.bb_lst
+                }
+            ]
+        });
+    });
+    </script>
 
 </body>
 </html>
