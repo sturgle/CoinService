@@ -33,20 +33,12 @@ if __name__ == "__main__":
 
     for code in codes:
         print ('Get Close', code)
-        url = 'https://k.sosobtc.com/data/period?symbol=huobi' + code.lower() + 'cny&step=86400'
-        ua = UserAgent()
-        headers = {'User-Agent': ua.chrome}
-        page_src = requests.get(url, headers=headers).text
-
-        json_data = json.loads(page_src)
-        
+        df = quandl.get("BITFINEX/" + code + "USD")
 
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close'])
 
-        for item in json_data:
-            dt = datetime.fromtimestamp(float(item[0])).date()
-            close = float(item[4])
-            cursor.execute(upsert_sql, (code, dt, close) * 2)
+        for index, row in df.iterrows():
+            cursor.execute(upsert_sql, (code, index.date(), float(row['Last'])) * 2)
         
         conn.commit()
         time.sleep(1)
