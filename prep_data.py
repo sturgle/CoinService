@@ -167,8 +167,7 @@ if __name__ == "__main__":
                         pick_7 = code
                     if row[code + 'mmtm30'] == np.max(mmtm30_lst):
                         pick_30 = code
-
-                if pick_7 == pick_30  and row[code] >= row[pick_7 + 'ma']:
+                if pick_7 == pick_30  and row[pick_7] >= row[pick_7 + 'ma']:
                     pick = pick_7
             
 
