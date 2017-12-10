@@ -29,7 +29,7 @@ if __name__ == "__main__":
     codes = {
             'BTC': 'btcusd',
             'LTC': 'ltcusd',
-            'EOS': 'eosusd'
+            'IOT': 'iotusd'
     }
 
     for code in codes:
