@@ -27,15 +27,16 @@ if __name__ == "__main__":
     cursor = conn.cursor()
 
     codes = {
-            'BTC': 'btcusd',
-            'LTC': 'ltcusd',
-            'IOT': 'iotusd'
+            'BTC': 'bitfinex/btcusd',
+            'LTC': 'bitfinex/ltcusd',
+            # 'XLM': 'poloniex/strusdt'
+            'EOS': 'bitfinex/eosusd',
     }
 
     for code in codes:
         print ('fetching', code)
         urlcode = codes[code]
-        url = "https://api.cryptowat.ch/markets/bitfinex/" + urlcode + "/ohlc"
+        url = "https://api.cryptowat.ch/markets/" + urlcode + "/ohlc"
         page_src = requests.get(url).text
         ticks = json.loads(page_src)
         close_lst = ticks['result']['86400']
