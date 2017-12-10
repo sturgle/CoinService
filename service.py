@@ -70,7 +70,7 @@ def get_rsi_data():
 def get_field_data(field):
     conn = pool.connection();
     try:
-        codes = ['BTC', 'LTC', 'ETH']
+        codes = ['BTC', 'LTC', 'EOS']
         lst = []
         today = datetime.now().date()
 
@@ -86,13 +86,13 @@ def get_field_data(field):
         dt_lst = []
         btc_lst = []
         ltc_lst = []
-        eth_lst = []
+        eos_lst = []
         for index, row in df.iterrows():
             dt_lst.append(index)
             btc_lst.append(row['BTC'])
             ltc_lst.append(row['LTC'])
-            eth_lst.append(row['ETH'])
-        res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'ltc_lst': ltc_lst, 'eth_lst': eth_lst}
+            eos_lst.append(row['EOS'])
+        res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'ltc_lst': ltc_lst, 'eos_lst': eos_lst}
         return jsonify(res)
     except Exception as ex:
         print (type(ex), ex)
@@ -105,7 +105,7 @@ def get_field_data(field):
 def get_pick_date():
     conn = pool.connection();
     try:
-        codes = ['BTC', 'LTC', 'ETH']
+        codes = ['BTC', 'LTC', 'EOS']
         today = datetime.now().date()
         sql = "select date, pick from coin_pick where date >= %(s_dt)s and date <= %(e_dt)s order by date"
         df = pd.read_sql(sql, con=conn, params={'s_dt':today - relativedelta(days=lag_days), 'e_dt': today - relativedelta(days=0)})
@@ -113,24 +113,24 @@ def get_pick_date():
         dt_lst = []
         btc_lst = []
         ltc_lst = []
-        eth_lst = []
+        eos_lst = []
 
         for index, row in df.iterrows():
             dt_lst.append(index)
             btc_x = 0
             ltc_x = 0
-            eth_x = 0
+            EOS_x = 0
             if row['pick'] == 'BTC':
                 btc_x = 1
             if row['pick'] == 'LTC':
                 ltc_x = 1
-            if row['pick'] == 'ETH':
-                eth_x = 1
+            if row['pick'] == 'EOS':
+                EOS_x = 1
             btc_lst.append(btc_x)
             ltc_lst.append(ltc_x)
-            eth_lst.append(eth_x)
+            eos_lst.append(EOS_x)
 
-        res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'ltc_lst': ltc_lst, 'eth_lst': eth_lst}
+        res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'ltc_lst': ltc_lst, 'eos_lst': eos_lst}
         return jsonify(res)
     except Exception as ex:
         print (type(ex), ex)

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-import quandl
+# import quandl
 import pandas as pd
 import numpy as np
 import pymysql
 import requests
 import json
-import bs4
+# import bs4
 import time
 import sys
 from datetime import datetime
 import talib
-from fake_useragent import UserAgent
+#from fake_useragent import UserAgent
 import xutils
 
 
@@ -26,22 +26,26 @@ if __name__ == "__main__":
     conn = xutils.getLocalConn()
     cursor = conn.cursor()
 
-    codes = ['BTC', 'LTC', 'ETH']
-
-    quandl.ApiConfig.api_key = config['key']
-
+    codes = {
+            'BTC': 'btcusd',
+            'LTC': 'ltcusd',
+            'EOS': 'eosusd'
+    }
 
     for code in codes:
-        print ('Get Close', code)
-        df = quandl.get("BITFINEX/" + code + "USD")
-
+        print ('fetching', code)
+        urlcode = codes[code]
+        url = "https://api.cryptowat.ch/markets/bitfinex/" + urlcode + "/ohlc"
+        page_src = requests.get(url).text
+        ticks = json.loads(page_src)
+        close_lst = ticks['result']['86400']
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close'])
-
-        for index, row in df.iterrows():
-            cursor.execute(upsert_sql, (code, index.date(), float(row['Last'])) * 2)
-        
+        for item in close_lst[:-1]:
+            dt = datetime.fromtimestamp(item[0]).date()
+            if dt.year >= 2017:
+                cursor.execute(upsert_sql, (code, dt, float(item[4])) * 2)
         conn.commit()
-        time.sleep(1)
+        time.sleep(5)
 
     s_lst = []
     for code in codes:
@@ -174,6 +178,15 @@ if __name__ == "__main__":
         if pick == last_pick:
             pass
         else:
+            if last_pick is None:
+                last_close = 1.0
+            else:
+                last_close = row[last_pick]
+            if pick is None:
+                this_close = 1.0
+            else:
+                this_close = row[pick]
+            print (index, last_pick, last_close, '==>', pick, this_close)
             cnt += 1
         df.loc[index, 'pick'] = str(pick)
         last_pick = pick
