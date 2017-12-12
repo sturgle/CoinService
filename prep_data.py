@@ -155,7 +155,7 @@ if __name__ == "__main__":
                     if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'ma']:
                         pick = code
                         break
-        elif row[last_pick + 'mmtm7'] < 0:
+        elif row[last_pick + 'mmtm7'] not in mmtm7_lst:
             if len(mmtm30_lst) != 0:
                 for code in codes:
                     if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'ma']:
