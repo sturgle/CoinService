@@ -142,7 +142,6 @@ if __name__ == "__main__":
             stoploss_bar = -0.15
             if row[code + 'mmtm1'] < stoploss_bar:
                 continue
-
             if row[code + 'mmtm7'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
                 mmtm7_lst.append(row[code + 'mmtm7'])
             if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
