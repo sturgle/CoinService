@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
     last_pick = None
     cnt = 0
-    dd_bar = 0.75
+    dd_bar = 0.775
     rsi_bar = 90
     for index, row in df.iterrows():
         pick = None
