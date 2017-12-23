@@ -132,7 +132,7 @@ if __name__ == "__main__":
 
     last_pick = None
     cnt = 0
-    dd_bar = 0.775
+    # dd_bar = 0.775
     rsi_bar = 90
 
     for index, row in df.iterrows():
@@ -143,9 +143,9 @@ if __name__ == "__main__":
             stoploss_bar = -0.15
             if row[code + 'mmtm1'] < stoploss_bar:
                 continue
-            if row[code + 'mmtm7'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
+            if row[code + 'mmtm7'] > 0 and row[code + 'rsi'] < rsi_bar:
                 mmtm7_lst.append(row[code + 'mmtm7'])
-            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
+            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'rsi'] < rsi_bar:
                 mmtm30_lst.append(row[code + 'mmtm30'])
         if len(mmtm7_lst) == 0:
             pass
