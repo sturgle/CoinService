@@ -93,9 +93,6 @@ if __name__ == "__main__":
         mmtm30_lst1 = []
         mmtm30_lst2 = []
         for code in codes:
-            stoploss_bar = -0.15
-            if row[code + 'mmtm1'] < stoploss_bar:
-                continue
             if row[code + 'rsi'] > rsi_bar:
                 continue
             # 既在ma30上，又在mmtm7上
