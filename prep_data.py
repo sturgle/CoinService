@@ -84,7 +84,7 @@ if __name__ == "__main__":
                     price_lst.append([dt, float(item[4])])
 
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close'])
-        for item in price_lst:
+        for item in price_lst[:-1]:
             cursor.execute(upsert_sql, (code, item[0], float(item[1])) * 2)
         conn.commit()
         time.sleep(3)
@@ -140,10 +140,10 @@ if __name__ == "__main__":
         df[code + 'rsi'] = talib.RSI(df[code].values, 15)
         df[code + 'rsi'] = df[code + 'rsi'].fillna(0)
 
-        df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30)
+        df[code + 'ma'] = talib.EMA(df[code].values, 30)
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
-        df[code + 'xma'] = pd.rolling_mean(df[code], 180, 180)
+        df[code + 'xma'] = talib.EMA(df[code].values, 180)
         df[code + 'xma'] = df[code + 'xma'].fillna(0)
 
         df[code + 'mmtm1'] = np.log(df[code] / df[code].shift(1))

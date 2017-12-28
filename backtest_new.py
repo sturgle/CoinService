@@ -11,6 +11,7 @@ from datetime import datetime
 import talib
 import xutils
 
+
 if __name__ == "__main__":
     config = xutils.getLocalConfigJson()
 
@@ -20,7 +21,7 @@ if __name__ == "__main__":
     codes = {
         'BTC': 'bitcoin',
         'LTC': 'litecoin',
-        'ETH': 'ethereum'
+        'EOS': 'eos'
     }
 
     for code in codes:
@@ -53,7 +54,8 @@ if __name__ == "__main__":
         sql = "select date, close from coin_close where code = %(code)s order by date"
         df = pd.read_sql(sql, con=conn, params={'code':code})
         df = df.set_index('date')
-        s_lst.append(df['close'])
+        df.columns = [code]
+        s_lst.append(df[code])
 
     cursor.close()
     conn.close()
@@ -61,12 +63,6 @@ if __name__ == "__main__":
     # 选择今日币种
     df = pd.concat(s_lst, axis=1)
     df = df.fillna(method='ffill')
-    df.columns = codes
-
-    # df = df.loc[datetime(2016, 1, 1).date(): ]
-
-    print df.head()
-    print df.tail()
 
     for code in codes:
         df[code + 'mmtm7'] = np.log(df[code] / (df[code].shift(6) + df[code].shift(7) + df[code].shift(8)) * 3)
@@ -76,13 +72,17 @@ if __name__ == "__main__":
         df[code + 'rsi'] = talib.RSI(df[code].values, 15)
         df[code + 'rsi'] = df[code + 'rsi'].fillna(0)
 
-        df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30)
+        df[code + 'ma'] = talib.EMA(df[code].values, 30)
+        df[code + 'ma7'] = talib.EMA(df[code].values, 7)
+
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
-        df[code + 'ma7'] = pd.rolling_mean(df[code], 7, 7)
         df[code + 'ma7'] = df[code + 'ma7'].fillna(0)
 
         df[code + 'mmtm1'] = np.log(df[code] / df[code].shift(1))
+
+    print df.head()
+    print df.tail()
 
     last_pick = None
     cnt = 0
