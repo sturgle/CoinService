@@ -140,7 +140,10 @@ if __name__ == "__main__":
         df[code + 'rsi'] = talib.RSI(df[code].values, 15)
         df[code + 'rsi'] = df[code + 'rsi'].fillna(0)
 
-        df[code + 'ma'] = talib.EMA(df[code].values, 30)
+        df[code + 'ema'] = talib.EMA(df[code].values, 30)
+        df[code + 'ema'] = df[code + 'ema'].fillna(0)
+
+        df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30) 
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
         df[code + 'xma'] = talib.EMA(df[code].values, 180)
@@ -177,15 +180,16 @@ if __name__ == "__main__":
         mmtm30_lst2 = []
         for code in codes:
             if row[code + 'rsi'] > rsi_bar:
-                continue
-            # 既在ma30上，又在mmtm7上
-            if row[code + 'mmtm7'] >= 0 and row[code] >= row[code + 'ma']:
-                class1_lst.append(code)
-                mmtm30_lst1.append(row[code + 'mmtm30'])
-            # 只在ma30上
-            elif row[code] >= row[code + 'ma']:
-                class2_lst.append(code)
-                mmtm30_lst2.append(row[code + 'mmtm30'])
+                pass
+            elif row[code] >= row[code + 'ema'] and row[code] >= row[code + 'ma']:
+                # 既在ma30上，又在mmtm7上
+                if row[code + 'mmtm7'] >= 0:
+                    class1_lst.append(code)
+                    mmtm30_lst1.append(row[code + 'mmtm30'])
+                # 只在ma30上
+                else:
+                    class2_lst.append(code)
+                    mmtm30_lst2.append(row[code + 'mmtm30'])
         # 默认延续上次选择
         pick = last_pick
         if len(class2_lst) == 0 and len(class1_lst) == 0:
