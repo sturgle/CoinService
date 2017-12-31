@@ -26,10 +26,10 @@ if __name__ == "__main__":
 
     codes = {
             'BTC': 'bitfinex/btcusd',
-            'LTC': 'bitfinex/ltcusd',
+            # 'LTC': 'bitfinex/ltcusd',
             # 'XLM': 'poloniex/strusdt'
             'EOS': 'bitfinex/eosusd',
-            # 'BTS': ['poloniex/btsbtc', 'poloniex/btcusdt']
+            'BTS': ['poloniex/btsbtc', 'poloniex/btcusdt']
     }
 
     for code in codes:
