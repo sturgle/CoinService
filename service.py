@@ -31,8 +31,6 @@ app = Flask(__name__)
 
 lag_days = 60
 
-ALT_CODE2 = 'EOS'
-ALT_CODE1 = 'BTS'
 
 @app.route('/')
 def hello():
@@ -72,14 +70,13 @@ def get_rsi_data():
 def get_field_data(field):
     conn = pool.connection();
     try:
-        # codes = ['BTC', 'LTC', ALT_CODE]
-        codes = ['BTC', ALT_CODE1, ALT_CODE2]
+        codes = ['BTC', 'LTC', 'ETH']
         lst = []
         today = datetime.now().date()
 
         for code in codes:
             sql = "select date, " + field + " from coin_close where code = %(code)s and date >= %(s_dt)s and date <= %(e_dt)s order by date"
-            df = pd.read_sql(sql, con=conn, params={'code':code, 's_dt':today - relativedelta(days=lag_days), 'e_dt':  today + relativedelta(days=1)})
+            df = pd.read_sql(sql, con=conn, params={'code':code, 's_dt':today - relativedelta(days=lag_days), 'e_dt': today - relativedelta(days=0)})
 
             df = df.set_index('date')
             df.rename(columns={field: code}, inplace=True)
@@ -88,14 +85,14 @@ def get_field_data(field):
         df = pd.concat(lst, join='inner', axis=1)
         dt_lst = []
         btc_lst = []
-        alt_lst1 = []
-        alt_lst2 = []
+        ltc_lst = []
+        eth_lst = []
         for index, row in df.iterrows():
             dt_lst.append(index)
             btc_lst.append(row['BTC'])
-            alt_lst1.append(row[ALT_CODE1])
-            alt_lst2.append(row[ALT_CODE2])
-        res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'alt_lst1': alt_lst1, 'alt_lst2': alt_lst2}
+            ltc_lst.append(row['LTC'])
+            eth_lst.append(row['ETH'])
+        res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'ltc_lst': ltc_lst, 'eth_lst': eth_lst}
         return jsonify(res)
     except Exception as ex:
         print (type(ex), ex)
@@ -108,32 +105,32 @@ def get_field_data(field):
 def get_pick_date():
     conn = pool.connection();
     try:
-        codes = ['BTC', ALT_CODE1, ALT_CODE2]
+        codes = ['BTC', 'LTC', 'ETH']
         today = datetime.now().date()
         sql = "select date, pick from coin_pick where date >= %(s_dt)s and date <= %(e_dt)s order by date"
-        df = pd.read_sql(sql, con=conn, params={'s_dt':today - relativedelta(days=lag_days), 'e_dt':  today + relativedelta(days=1)})
+        df = pd.read_sql(sql, con=conn, params={'s_dt':today - relativedelta(days=lag_days), 'e_dt': today - relativedelta(days=0)})
         df = df.set_index('date')
         dt_lst = []
         btc_lst = []
-        alt_lst1 = []
-        alt_lst2 = []
+        ltc_lst = []
+        eth_lst = []
 
         for index, row in df.iterrows():
             dt_lst.append(index)
             btc_x = 0
-            alt1_x = 0
-            alt2_x = 0
+            ltc_x = 0
+            eth_x = 0
             if row['pick'] == 'BTC':
                 btc_x = 1
-            if row['pick'] == ALT_CODE1:
-                alt1_x = 1
-            if row['pick'] == ALT_CODE2:
-                alt2_x = 1
+            if row['pick'] == 'LTC':
+                ltc_x = 1
+            if row['pick'] == 'ETH':
+                eth_x = 1
             btc_lst.append(btc_x)
-            alt_lst1.append(alt1_x)
-            alt_lst2.append(alt2_x)
+            ltc_lst.append(ltc_x)
+            eth_lst.append(eth_x)
 
-        res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'alt_lst1': alt_lst1, 'alt_lst2': alt_lst2}
+        res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'ltc_lst': ltc_lst, 'eth_lst': eth_lst}
         return jsonify(res)
     except Exception as ex:
         print (type(ex), ex)
@@ -163,4 +160,3 @@ def get_bb_date():
     finally:
         if conn is not None:
             conn.close()
-

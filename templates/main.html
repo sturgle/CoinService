@@ -15,7 +15,6 @@
 
     <script type="text/javascript">
         var myChartPick = echarts.init(document.getElementById('div_pick'));
-
         $.get('pick_data.json').done(function (data) {
             myChartPick.setOption({
                 title: {
@@ -31,7 +30,7 @@
                     }
                 },
                 legend: {
-                    data:['BTC','BTS','EOS']
+                    data:['BTC','LTC','ETH']
                 },
                 toolbox: {
                     feature: {
@@ -65,18 +64,18 @@
                         data: data.btc_lst
                     },
                     {
-                        name:'BTS',
+                        name:'LTC',
                         type:'line',
                         stack: '总量',
                         areaStyle: {normal: {}},
-                        data: data.alt_lst1
+                        data: data.ltc_lst
                     },
                     {
-                        name:'EOS',
+                        name:'ETH',
                         type:'line',
                         stack: '总量',
                         areaStyle: {normal: {}},
-                        data: data.alt_lst2
+                        data: data.eth_lst
                     }
                 ]
             });
@@ -85,7 +84,6 @@
 
     <script type="text/javascript">
         var myChartMmtm7 = echarts.init(document.getElementById('div_mmtm7'));
-
         $.get('mmtm7_data.json').done(function (data) {
             myChartMmtm7.setOption({
                 title: {
@@ -95,7 +93,7 @@
                     trigger: 'axis'
                 },
                 legend: {
-                    data:['BTC','BTS','EOS']
+                    data:['BTC','LTC','ETH']
                 },
                 grid: {
                     left: '3%',
@@ -123,14 +121,14 @@
                         data: data.btc_lst
                     },
                     {
-                        name:'BTS',
+                        name:'LTC',
                         type:'line',
-                        data: data.alt_lst1
+                        data: data.ltc_lst
                     },
                     {
-                        name:'EOS',
+                        name:'ETH',
                         type:'line',
-                        data: data.alt_lst2
+                        data: data.eth_lst
                     }
                 ]
             });
@@ -139,7 +137,6 @@
 
     <script type="text/javascript">
         var myChartMmtm30 = echarts.init(document.getElementById('div_mmtm30'));
-
         $.get('mmtm30_data.json').done(function (data) {
             myChartMmtm30.setOption({
                 title: {
@@ -149,7 +146,7 @@
                     trigger: 'axis'
                 },
                 legend: {
-                    data:['BTC','BTS','EOS']
+                    data:['BTC','LTC','ETH']
                 },
                 grid: {
                     left: '3%',
@@ -177,68 +174,14 @@
                         data: data.btc_lst
                     },
                     {
-                        name:'BTS',
+                        name:'LTC',
                         type:'line',
-                        data: data.alt_lst1
+                        data: data.ltc_lst
                     },
                     {
-                        name:'EOS',
+                        name:'ETH',
                         type:'line',
-                        data: data.alt_lst2
-                    }
-                ]
-            });
-        });
-    </script>
-
-    <script type="text/javascript">
-        var myChartDd = echarts.init(document.getElementById('div_dd'));
-
-        $.get('dd_data.json').done(function (data) {
-            myChartDd.setOption({
-                title: {
-                    text: 'DownsideDeviation - 45d'
-                },
-                tooltip: {
-                    trigger: 'axis'
-                },
-                legend: {
-                    data:['BTC','BTS','EOS']
-                },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '3%',
-                    containLabel: true
-                },
-                toolbox: {
-                    feature: {
-                        saveAsImage: {}
-                    }
-                },
-                xAxis: {
-                    type: 'category',
-                    boundaryGap: false,
-                    data: data.dt_lst
-                },
-                yAxis: {
-                    type: 'value'
-                },
-                series: [
-                    {
-                        name:'BTC',
-                        type:'line',
-                        data: data.btc_lst
-                    },
-                    {
-                        name:'BTS',
-                        type:'line',
-                        data: data.alt_lst1
-                    },
-                    {
-                        name:'EOS',
-                        type:'line',
-                        data: data.alt_lst2
+                        data: data.eth_lst
                     }
                 ]
             });
@@ -247,7 +190,6 @@
 
 <script type="text/javascript">
     var myChartRsi = echarts.init(document.getElementById('div_rsi'));
-
     $.get('rsi_data.json').done(function (data) {
         myChartRsi.setOption({
             title: {
@@ -257,7 +199,7 @@
                 trigger: 'axis'
             },
             legend: {
-                data:['BTC','BTS','EOS']
+                data:['BTC','LTC','ETH']
             },
             grid: {
                 left: '3%',
@@ -285,14 +227,14 @@
                     data: data.btc_lst
                 },
                 {
-                    name:'BTS',
+                    name:'LTC',
                     type:'line',
-                    data: data.alt_lst1
+                    data: data.ltc_lst
                 },
                 {
-                    name:'EOS',
+                    name:'ETH',
                     type:'line',
-                    data: data.alt_lst2
+                    data: data.eth_lst
                 }
             ]
         });
@@ -301,7 +243,6 @@
 
 <script type="text/javascript">
     var myChartBullBear = echarts.init(document.getElementById('div_bullbear'));
-
     $.get('bullbear_data.json').done(function (data) {
         myChartBullBear.setOption({
             title: {
