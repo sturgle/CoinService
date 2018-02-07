@@ -243,6 +243,59 @@
     </script>
 
 <script type="text/javascript">
+        var myChartDd = echarts.init(document.getElementById('div_dd'));
+        $.get('dd_data.json').done(function (data) {
+            myChartDd.setOption({
+                title: {
+                    text: 'DownsideDeviation - 45d'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data:['BTC','LTC','ETH']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                toolbox: {
+                    feature: {
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: data.dt_lst
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        name:'BTC',
+                        type:'line',
+                        data: data.btc_lst
+                    },
+                    {
+                        name:'LTC',
+                        type:'line',
+                        data: data.ltc_lst
+                    },
+                    {
+                        name:'ETH',
+                        type:'line',
+                        data: data.eth_lst
+                    }
+                ]
+            });
+        });
+    </script>
+
+<script type="text/javascript">
     var myChartBullBear = echarts.init(document.getElementById('div_bullbear'));
     $.get('bullbear_data.json').done(function (data) {
         myChartBullBear.setOption({
