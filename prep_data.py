@@ -145,7 +145,7 @@ if __name__ == "__main__":
         df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30) 
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
-        df[code + 'xma'] = pd.rolling_mean(df[code], 120, 120) 
+        df[code + 'xma'] = pd.rolling_mean(df[code], 180, 180) 
         df[code + 'xma'] = df[code + 'xma'].fillna(0)
 
         df[code + 'mmtm1'] = np.log(df[code] / df[code].shift(1))
