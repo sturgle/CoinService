@@ -36,6 +36,9 @@ lag_days = 60
 def hello():
     return render_template('main.html')
 
+@app.route('/cap')
+def cap():
+    return render_template('adjusted_cap.html')
 
 @app.route("/mmtm7_data.json", methods=['GET'])
 def get_mmtm7_data():
@@ -175,6 +178,37 @@ def get_adjusted_cap():
             cap_lst.append([row['code'], row['cap'], str(row['date'])])
 
         return jsonify(cap_lst)
+    except Exception as ex:
+        print (type(ex), ex)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+@app.route("/adjusted_cap_square_root.json", methods=['GET'])
+def get_adjusted_cap_square_root():
+    conn = pool.connection();
+    try:
+        sql = "select code, date, cap from coin_cap where date = (select max(date) from coin_cap) order by cap desc"
+        df = pd.read_sql(sql, con=conn)
+        cap_lst = []
+
+        legendData = []
+        seriesData = []
+        selected = {}
+
+        cnt = 0
+        for index, row in df.iterrows():
+            if cnt >= 15:
+                continue
+            seriesData.append({'name':row['code'], 'value':row['cap'] ** 0.5})
+            selected[row['code']] = True
+            # legendData.append(row['code'])
+            cnt += 1
+
+        res = {'legendData': legendData, 'seriesData': seriesData, 'selected': selected}
+
+        return jsonify(res)
     except Exception as ex:
         print (type(ex), ex)
     finally:
