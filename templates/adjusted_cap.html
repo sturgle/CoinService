@@ -7,7 +7,7 @@
     <script src="static/jquery.min.js"></script>
 </head>
 <body>
-    <div id="div_cap" style="width: 1000px;height:800px;"></div>
+    <div id="div_cap" style="width: 800px; height:800px;"></div>
 
     <script type="text/javascript">
         var myChartCap = echarts.init(document.getElementById('div_cap'));
@@ -15,8 +15,7 @@
 
             myChartCap.setOption({
                 title : {
-                    text: '同名数量统计',
-                    subtext: '纯属虚构',
+                    text: '调整后权重',
                     x:'center'
                 },
                 tooltip : {
@@ -26,19 +25,19 @@
                 legend: {
                     type: 'scroll',
                     orient: 'vertical',
-                    right: 10,
-                    top: 20,
-                    bottom: 20,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
                     data: data.legendData,
 
                     selected: data.selected
                 },
                 series : [
                     {
-                        name: '姓名',
+                        name: '',
                         type: 'pie',
-                        radius : '55%',
-                        center: ['40%', '50%'],
+                        radius : '50%',
+                        center: ['50%', '50%'],
                         data: data.seriesData,
                         itemStyle: {
                             emphasis: {

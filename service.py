@@ -166,51 +166,55 @@ def get_bb_date():
             conn.close()
 
 
-@app.route("/adjusted_cap.json", methods=['GET'])
-def get_adjusted_cap():
-    conn = pool.connection();
+def get_cap_lst():
+    with open('ignore_lst.json') as symbol_file:
+        ignore_lst = json.load(symbol_file)['list']
+
+    conn = pool.connection()
+
     try:
         sql = "select code, date, cap from coin_cap where date = (select max(date) from coin_cap) order by cap desc"
         df = pd.read_sql(sql, con=conn)
         cap_lst = []
 
         for index, row in df.iterrows():
+            if row['code'] in ignore_lst:
+                continue
             cap_lst.append([row['code'], row['cap'], str(row['date'])])
 
-        return jsonify(cap_lst)
+        return cap_lst
     except Exception as ex:
         print (type(ex), ex)
     finally:
         if conn is not None:
             conn.close()
+
+
+
+@app.route("/adjusted_cap.json", methods=['GET'])
+def get_adjusted_cap():
+    cap_lst = get_cap_lst()
+    return jsonify(cap_lst)
 
 
 @app.route("/adjusted_cap_square_root.json", methods=['GET'])
 def get_adjusted_cap_square_root():
-    conn = pool.connection();
-    try:
-        sql = "select code, date, cap from coin_cap where date = (select max(date) from coin_cap) order by cap desc"
-        df = pd.read_sql(sql, con=conn)
-        cap_lst = []
+    cap_lst = get_cap_lst()
 
-        legendData = []
-        seriesData = []
-        selected = {}
+    legendData = []
+    seriesData = []
+    selected = {}
 
-        cnt = 0
-        for index, row in df.iterrows():
-            if cnt >= 15:
-                continue
-            seriesData.append({'name':row['code'], 'value':row['cap'] ** 0.5})
-            selected[row['code']] = True
-            # legendData.append(row['code'])
-            cnt += 1
+    cnt = 0
+    for cap in cap_lst:
+        if cnt >= 15:
+            continue
+        # legendData.append(cap[0])
+        seriesData.append({'name':cap[0], 'value':round(cap[1] ** 0.5, 2)})
+        selected[cap[0]] = True
+        cnt += 1
 
-        res = {'legendData': legendData, 'seriesData': seriesData, 'selected': selected}
+    res = {'legendData': legendData, 'seriesData': seriesData, 'selected': selected}
 
-        return jsonify(res)
-    except Exception as ex:
-        print (type(ex), ex)
-    finally:
-        if conn is not None:
-            conn.close()
+    return jsonify(res)
+
