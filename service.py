@@ -214,7 +214,7 @@ def get_adjusted_cap_square_root():
         selected[cap[0]] = True
         cnt += 1
 
-    res = {'legendData': legendData, 'seriesData': seriesData, 'selected': selected}
+    res = {'legendData': legendData, 'seriesData': seriesData, 'selected': selected, 'date': cap_lst[0][2]}
 
     return jsonify(res)
 
