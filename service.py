@@ -138,6 +138,7 @@ def get_pick_date():
         if conn is not None:
             conn.close()
 
+
 @app.route("/bullbear_data.json", methods=['GET'])
 def get_bb_date():
     conn = pool.connection();
@@ -155,6 +156,25 @@ def get_bb_date():
 
         res = {'dt_lst': dt_lst, 'bb_lst': bb_lst}
         return jsonify(res)
+    except Exception as ex:
+        print (type(ex), ex)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+@app.route("/adjusted_cap.json", methods=['GET'])
+def get_adjusted_cap():
+    conn = pool.connection();
+    try:
+        sql = "select code, date, cap from coin_cap where date = (select max(date) from coin_cap) order by cap desc"
+        df = pd.read_sql(sql, con=conn)
+        cap_lst = []
+
+        for index, row in df.iterrows():
+            cap_lst.append([row['code'], row['cap'], str(row['date'])])
+
+        return jsonify(cap_lst)
     except Exception as ex:
         print (type(ex), ex)
     finally:
