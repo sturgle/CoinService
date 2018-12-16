@@ -5,6 +5,8 @@ import urllib2
 import json
 from datetime import datetime
 import numpy as np
+import time
+import xutils
 
 def AdjustedMarketCap(lst):
     # half decay as 3 days
@@ -33,8 +35,13 @@ for a in soup.find_all('a', {'class': 'currency-name-container'}, href=True):
 
 coins = coins[:30]
 
-for coin in coins:
-    url = 'https://coinmarketcap.com/currencies/' + coin + '/historical-data/'
+config = xutils.getLocalConfigJson()
+conn = xutils.getLocalConn()
+cursor = conn.cursor()
+
+for code in coins:
+    time.sleep(1)
+    url = 'https://coinmarketcap.com/currencies/' + code + '/historical-data/'
     content = urllib2.urlopen(url).read()
     soup = BeautifulSoup(content, "html.parser")
     div = soup.find('div', {'id':'historical-data'})
@@ -48,12 +55,20 @@ for coin in coins:
         data.append([ele for ele in cols if ele]) # Get rid of empty values
 
     lst = []
+    max_dt = None
     for row in data:
         dt = datetime.strptime(row[0], '%b %d, %Y').date()
+        if not max_dt or max_dt < dt:
+            max_dt = dt
         if row[6] == '-':
             cap = 0.0
         else:
             cap = float(row[6].replace(',', ''))
         lst.append(cap)
     cap = AdjustedMarketCap(lst)
-    print coin, cap
+    print code, max_dt, cap
+    upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_cap', ['code', 'date', 'cap'])
+
+    cursor.execute(upsert_sql, (code, max_dt, cap) * 2)
+
+conn.commit()
