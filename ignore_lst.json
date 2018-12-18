@@ -7,6 +7,9 @@
 		"bitcoin-gold",
 		"paxos-standard-token",
 		"bitcoin-diamond",
-		"bytecoin-bcn"
+		"bytecoin-bcn",
+		"verge",
+		"siacoin",
+		"pundi-x",
 	]
 }
