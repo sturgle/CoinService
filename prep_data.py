@@ -5,10 +5,12 @@ import numpy as np
 import pymysql
 import requests
 import json
+# import bs4
 import time
 import sys
 from datetime import datetime
 import talib
+#from fake_useragent import UserAgent
 import xutils
 
 
@@ -34,59 +36,17 @@ if __name__ == "__main__":
     for code in codes:
         print ('fetching', code)
         urlcode = codes[code]
-        if type(urlcode) is list:
-            dict_lst = []
-            dt_lst = []
-            for tcode in urlcode:
-                dct = {}
-                url = "https://api.cryptowat.ch/markets/" + tcode + "/ohlc"
-                print url
-                page_src = requests.get(url).text
-                ticks = json.loads(page_src)
-                close_lst = ticks['result']['86400']
-                for item in close_lst:
-                    dt = datetime.fromtimestamp(item[0]).date()
-                    if dt.year >= 2017:
-                        dct[dt] = float(item[4])
-                    if dt not in dt_lst:
-                        dt_lst.append(dt)
-                dict_lst.append(dct)
-                time.sleep(3)
-
-            price_lst = []
-            dt_lst = sorted(dt_lst)
-            for dt in dt_lst:
-                flag = True
-                mul_lst = []
-                for dct in dict_lst:
-                    if dt not in dct:
-                        flag = False
-                        break
-                    else:
-                        mul_lst.append(dct[dt])
-                if flag:
-                    close = 1.0
-                    for mul in mul_lst:
-                        close *= mul
-                    price_lst.append([dt, close])
-
-        else:
-            url = "https://api.cryptowat.ch/markets/" + urlcode + "/ohlc"
-            print url
-            page_src = requests.get(url).text
-            ticks = json.loads(page_src)
-            close_lst = ticks['result']['86400']
-            price_lst = []
-            for item in close_lst:
-                dt = datetime.fromtimestamp(item[0]).date()
-                if dt.year >= 2017:
-                    price_lst.append([dt, float(item[4])])
-
+        url = "https://api.cryptowat.ch/markets/" + urlcode + "/ohlc"
+        page_src = requests.get(url).text
+        ticks = json.loads(page_src)
+        close_lst = ticks['result']['86400']
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close'])
-        for item in price_lst[:-1]:
-            cursor.execute(upsert_sql, (code, item[0], float(item[1])) * 2)
+        for item in close_lst[:-1]:
+            dt = datetime.fromtimestamp(item[0]).date()
+            if dt.year >= 2017:
+                cursor.execute(upsert_sql, (code, dt, float(item[4])) * 2)
         conn.commit()
-        time.sleep(3)
+        time.sleep(5)
 
     s_lst = []
     for code in codes:
@@ -139,20 +99,22 @@ if __name__ == "__main__":
         df[code + 'rsi'] = talib.RSI(df[code].values, 15)
         df[code + 'rsi'] = df[code + 'rsi'].fillna(0)
 
-        df[code + 'ema'] = talib.EMA(df[code].values, 30)
-        df[code + 'ema'] = df[code + 'ema'].fillna(0)
-
-        df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30) 
+        df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30)
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
-        df[code + 'xma'] = pd.rolling_mean(df[code], 180, 180) 
+        df[code + 'xma'] = pd.rolling_mean(df[code], 120, 120)
         df[code + 'xma'] = df[code + 'xma'].fillna(0)
 
         df[code + 'mmtm1'] = np.log(df[code] / df[code].shift(1))
 
         s = np.log(df[code] / df[code].shift(1))
     
+        df[code + 'dd'] = 0.0
         for i in range(DD_LAG, len(s)):
+            tmp_s = s[i - DD_LAG + 1: i + 1]
+            dd = downsideDeviation(tmp_s)
+            df.loc[s.index[i], code + 'dd'] = dd
+
             if df.iloc[i][code] > df.iloc[i][code + 'xma']:
                 df.loc[s.index[i], 'masig'] = df.loc[s.index[i], 'masig'] + 1
 
@@ -170,70 +132,50 @@ if __name__ == "__main__":
 
     last_pick = None
     cnt = 0
+    dd_bar = 0.775
     rsi_bar = 90
 
     for index, row in df.iterrows():
-        class1_lst = []
-        class2_lst = []
-        mmtm30_lst1 = []
-        mmtm30_lst2 = []
+        pick = None
+        mmtm7_lst = []
+        mmtm30_lst = []
         for code in codes:
-            if row[code + 'rsi'] > rsi_bar:
-                pass
-            elif row[code] >= row[code + 'ema'] and row[code] >= row[code + 'ma']:
-                # 既在ma30上，又在mmtm7上
-                if row[code + 'mmtm7'] >= 0:
-                    class1_lst.append(code)
-                    mmtm30_lst1.append(row[code + 'mmtm30'])
-                # 只在ma30上
-                else:
-                    class2_lst.append(code)
-                    mmtm30_lst2.append(row[code + 'mmtm30'])
-        # 默认延续上次选择
-        pick = last_pick
-        if len(class2_lst) == 0 and len(class1_lst) == 0:
-            pick = None
-            # print 'EMPTY', index
-            # 空仓
+            stoploss_bar = -0.15
+            if row[code + 'mmtm1'] < stoploss_bar:
+                continue
+            if row[code + 'mmtm7'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
+                mmtm7_lst.append(row[code + 'mmtm7'])
+            if row[code + 'mmtm7'] > 0 and row[code + 'mmtm30'] > 0 and row[code + 'dd'] < dd_bar and row[code + 'rsi'] < rsi_bar:
+                mmtm30_lst.append(row[code + 'mmtm30'])
+        if len(mmtm7_lst) == 0:
             pass
         elif last_pick is None:
-            # 开仓，选择mmtm30最强的
-            if len(class1_lst) != 0:
-                for code in class1_lst:
-                    if row[code + 'mmtm30'] == np.max(mmtm30_lst1) and row[code + 'mmtm30'] > 0:
+            if len(mmtm30_lst) != 0:
+                for code in codes:
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'ma']:
                         pick = code
-                        # print 'OPEN 1', index, pick
                         break
-            elif len(class2_lst) != 0:
-                for code in class2_lst:
-                    if row[code + 'mmtm30'] == np.max(mmtm30_lst2) and row[code + 'mmtm30'] > 0:
+        elif row[last_pick + 'mmtm7'] not in mmtm7_lst:
+            if len(mmtm30_lst) != 0:
+                for code in codes:
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'ma']:
                         pick = code
-                        # print 'OPEN 2', index, pick
                         break
-        elif last_pick in class1_lst:
-            # 上次的选择依然强势，那么看看是否可以选择更强
-            for code in class1_lst:
-                if row[code + 'mmtm30'] == np.max(mmtm30_lst1) and row[code + 'mmtm7'] > row[last_pick + 'mmtm7']:
-                    pick = code
-                    # print 'STRONG 1 1', index, pick
-                    break
         else:
-            # 上次的选择降级了在class2中
-            # 先从class1看是否有候选
-            if len(class1_lst) != 0:
-                for code in class1_lst:
-                    if row[code + 'mmtm30'] == np.max(mmtm30_lst1):
-                        pick = code
-                        # print 'STRONG 2 1', index, pick
-                        break
-            # 再从class2中择强
-            elif len(class2_lst) != 0:
-                for code in class2_lst:
-                    if row[code + 'mmtm30'] == np.max(mmtm30_lst2) and row[code + 'mmtm7'] > row[last_pick + 'mmtm7']:
-                        pick = code
-                        # print 'STRONG 2 2', index, pick
-                        break
+            pick = last_pick
+            # 试一下择强
+            if len(mmtm7_lst) != 0 and len(mmtm30_lst) != 0:
+                pick_7 = None
+                pick_30 = None
+                for code in codes:
+                    if row[code + 'mmtm7'] == np.max(mmtm7_lst):
+                        pick_7 = code
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst):
+                        pick_30 = code
+                if pick_7 == pick_30  and row[pick_7] >= row[pick_7 + 'ma']:
+                    pick = pick_7
             
+
         if pick == last_pick:
             pass
         else:
@@ -245,7 +187,7 @@ if __name__ == "__main__":
                 this_close = 1.0
             else:
                 this_close = row[pick]
-            print (index, last_pick, last_close, '==>', pick, this_close)
+            print str(index), last_pick, last_close, '==>', pick, this_close
             cnt += 1
         df.loc[index, 'pick'] = str(pick)
         last_pick = pick
