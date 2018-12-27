@@ -73,7 +73,7 @@ def get_rsi_data():
 def get_field_data(field):
     conn = pool.connection();
     try:
-        codes = ['BTC', 'LTC', 'ETH']
+        codes = ['BTC', 'EOS', 'ETH']
         lst = []
         today = datetime.now().date()
 
@@ -93,7 +93,7 @@ def get_field_data(field):
         for index, row in df.iterrows():
             dt_lst.append(index)
             btc_lst.append(row['BTC'])
-            ltc_lst.append(row['LTC'])
+            ltc_lst.append(row['EOS'])
             eth_lst.append(row['ETH'])
         res = {'dt_lst': dt_lst, 'btc_lst': btc_lst, 'ltc_lst': ltc_lst, 'eth_lst': eth_lst}
         return jsonify(res)
@@ -108,7 +108,7 @@ def get_field_data(field):
 def get_pick_date():
     conn = pool.connection();
     try:
-        codes = ['BTC', 'LTC', 'ETH']
+        codes = ['BTC', 'EOS', 'ETH']
         today = datetime.now().date()
         sql = "select date, pick from coin_pick where date >= %(s_dt)s and date <= %(e_dt)s order by date"
         df = pd.read_sql(sql, con=conn, params={'s_dt':today - relativedelta(days=lag_days), 'e_dt': today - relativedelta(days=0)})
@@ -125,7 +125,7 @@ def get_pick_date():
             eth_x = 0
             if row['pick'] == 'BTC':
                 btc_x = 1
-            if row['pick'] == 'LTC':
+            if row['pick'] == 'EOS':
                 ltc_x = 1
             if row['pick'] == 'ETH':
                 eth_x = 1

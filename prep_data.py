@@ -10,7 +10,7 @@ import time
 import sys
 from datetime import datetime
 import talib
-#from fake_useragent import UserAgent
+from binance.client import Client
 import xutils
 
 
@@ -20,31 +20,33 @@ def downsideDeviation(s):
 
 if __name__ == "__main__":
     config = xutils.getLocalConfigJson()
+    api_key = config['api_key']
+    api_secret = config['api_secret']
 
     DD_LAG = 45
 
     conn = xutils.getLocalConn()
     cursor = conn.cursor()
 
+    client = Client(api_key, api_secret)
+
     codes = {
-            'BTC': 'bitfinex/btcusd',
-            'LTC': 'bitfinex/ltcusd',
-            'ETH': 'bitfinex/ethusd',
-            # 'BTS': ['poloniex/btsbtc', 'poloniex/btcusdt']
+        'BTC': 'BTCUSDT',
+        'ETH': 'ETHUSDT',
+        'EOS': 'EOSUSDT'
     }
 
     for code in codes:
-        print ('fetching', code)
-        urlcode = codes[code]
-        url = "https://api.cryptowat.ch/markets/" + urlcode + "/ohlc"
-        page_src = requests.get(url).text
-        ticks = json.loads(page_src)
-        close_lst = ticks['result']['86400']
+        print ('Get Close', codes[code])
+
+        candles = client.get_klines(symbol=codes[code], interval=Client.KLINE_INTERVAL_1DAY)
+
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close'])
-        for item in close_lst[:-1]:
-            dt = datetime.fromtimestamp(item[0]).date()
-            if dt.year >= 2017:
-                cursor.execute(upsert_sql, (code, dt, float(item[4])) * 2)
+
+        # discard last one
+        for c in candles[:-1]:
+            dt = datetime.fromtimestamp(c[0]/1000).date()
+            cursor.execute(upsert_sql, (code, dt, float(c[4])) * 2)
         conn.commit()
         time.sleep(5)
 
@@ -99,10 +101,10 @@ if __name__ == "__main__":
         df[code + 'rsi'] = talib.RSI(df[code].values, 15)
         df[code + 'rsi'] = df[code + 'rsi'].fillna(0)
 
-        df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30)
+        df[code + 'ma'] = df[code].rolling(30).mean()
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
-        df[code + 'xma'] = pd.rolling_mean(df[code], 120, 120)
+        df[code + 'xma'] = df[code].rolling(120).mean()
         df[code + 'xma'] = df[code + 'xma'].fillna(0)
 
         df[code + 'mmtm1'] = np.log(df[code] / df[code].shift(1))
