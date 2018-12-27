@@ -8,16 +8,18 @@ import numpy as np
 import time
 import xutils
 
-def AdjustedMarketCap(lst):
-    # half decay as 3 days
-    ALPHA = -0.23104903333333335
+# half decay as 3 days
+CAP_ALPHA = -0.23104903333333335
+# half decay as 7 days
+VOL_ALPHA = -0.09902102579427789
 
+def AdjustedData(lst, alpha):
     # 1 months data is enough
     total = 0.0
     bottom = 0.0
     for i in range(len(lst)):
-        total += np.e ** (ALPHA * i) * lst[i]
-        bottom += np.e ** (ALPHA * i)
+        total += np.e ** (alpha * i) * lst[i]
+        bottom += np.e ** (alpha * i)
 
     return total / bottom
 
@@ -54,7 +56,8 @@ for code in coins:
         cols = [ele.text.strip() for ele in cols]
         data.append([ele for ele in cols if ele]) # Get rid of empty values
 
-    lst = []
+    cap_lst = []
+    volume_lst = []
     max_dt = None
     for row in data:
         dt = datetime.strptime(row[0], '%b %d, %Y').date()
@@ -64,11 +67,17 @@ for code in coins:
             cap = 0.0
         else:
             cap = float(row[6].replace(',', ''))
-        lst.append(cap)
-    cap = AdjustedMarketCap(lst)
-    print code, max_dt, cap
-    upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_cap', ['code', 'date', 'cap'])
+        if row[5] == '-':
+            volume = 0.0
+        else:
+            volume = float(row[5].replace(',', ''))
+        cap_lst.append(cap)
+        volume_lst.append(volume)
+    cap = AdjustedData(cap_lst, CAP_ALPHA)
+    volume = AdjustedData(volume_lst, VOL_ALPHA)
+    print code, max_dt, cap, volume
+    upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_cap', ['code', 'date', 'cap', 'volume'])
 
-    cursor.execute(upsert_sql, (code, max_dt, cap) * 2)
+    cursor.execute(upsert_sql, (code, max_dt, cap, volume) * 2)
 
 conn.commit()
