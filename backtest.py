@@ -11,6 +11,12 @@ from datetime import datetime
 import talib
 import xutils
 
+# coding=utf-8
+
+from binance.client import Client
+import json
+from datetime import datetime
+
 
 def downsideDeviation(s):
     return np.sqrt(np.sum((s.where(s < 0)) ** 2) / len(s)) * np.sqrt(252.0)
@@ -18,40 +24,34 @@ def downsideDeviation(s):
 
 if __name__ == "__main__":
     config = xutils.getLocalConfigJson()
+    api_key = config['api_key']
+    api_secret = config['api_secret']
+
 
     DD_LAG = 45
 
     conn = xutils.getLocalConn()
     cursor = conn.cursor()
 
+    client = Client(api_key, api_secret)
+
     codes = {
-        'BTC': 'bitcoin',
-        'LTC': 'litecoin',
-        'ETH': 'ethereum'
+        'BTC': 'BTCUSDT',
+        'ETH': 'ETHUSDT',
+        'EOS': 'EOSUSDT'
     }
 
     for code in codes:
-        print ('Get Close', code)
-        url_code = codes[code]
-        url = 'https://coinmarketcap.com/currencies/' + url_code + '/historical-data/?start=20130428&end=20170818'
+        print ('Get Close', codes[code])
 
-        page_src = requests.get(url).text
-        soup = bs4.BeautifulSoup(page_src, 'html.parser')
-        div = soup.find('div', {'id':'historical-data'})
-        table = div.find('table')
-        table_body = table.find('tbody')
-        data = []
-        rows = table_body.find_all('tr')
-        for row in rows:
-            cols = row.find_all('td')
-            cols = [ele.text.strip() for ele in cols]
-            data.append([ele for ele in cols if ele]) # Get rid of empty values
+        candles = client.get_klines(symbol=codes[code], interval=Client.KLINE_INTERVAL_1DAY)
 
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close'])
 
-        for row in data:
-            dt = datetime.strptime(row[0], '%b %d, %Y')
-            cursor.execute(upsert_sql, (code, dt.date(), float(row[4])) * 2)
+        # discard last one
+        for c in candles[:-1]:
+            dt = datetime.fromtimestamp(c[0]/1000).date()
+            cursor.execute(upsert_sql, (code, dt, float(c[4])) * 2)
         conn.commit()
         time.sleep(3)
 
@@ -86,11 +86,14 @@ if __name__ == "__main__":
         df[code + 'rsi'] = talib.RSI(df[code].values, 15)
         df[code + 'rsi'] = df[code + 'rsi'].fillna(0)
 
-        df[code + 'ma'] = pd.rolling_mean(df[code], 30, 30)
+        df[code + 'ma'] = df[code].rolling(30).mean()
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
-        df[code + 'xma'] = pd.rolling_mean(df[code], 180, 180)
-        df[code + 'xma'] = df[code + 'xma'].fillna(0)
+        df[code + 'ma7'] = df[code].rolling(7).mean()
+        df[code + 'ma7'] = df[code + 'ma7'].fillna(0)
+
+        # df[code + 'xma'] = pd.rolling_mean(df[code], 180, 180)
+        # df[code + 'xma'] = df[code + 'xma'].fillna(0)
 
         df[code + 'mmtm1'] = np.log(df[code] / df[code].shift(1))
 
@@ -102,25 +105,9 @@ if __name__ == "__main__":
             dd = downsideDeviation(tmp_s)
             df.loc[s.index[i], code + 'dd'] = dd
 
-            if df.iloc[i][code] > df.iloc[i][code + 'xma']:
-                df.loc[s.index[i], 'masig'] = df.loc[s.index[i], 'masig'] + 1
-
-            if df.iloc[i][code] >= 0:
-                df.loc[s.index[i], 'cnt'] = df.loc[s.index[i], 'cnt'] + 1
-
-    sig = 0
-    df['sig'] = 0
-    for index, row in df.iterrows():
-        if row['cnt'] == row['masig']:
-            sig = 1
-        elif row['masig'] == 0:
-            sig = 0
-        df.loc[index, 'sig'] = sig
-
     last_pick = None
     cnt = 0
-    # dd_bar = 0.775
-    dd_bar = 100
+    dd_bar = 0.75
     rsi_bar = 90
     for index, row in df.iterrows():
         pick = None
@@ -139,7 +126,7 @@ if __name__ == "__main__":
         elif last_pick is None:
             if len(mmtm30_lst) != 0:
                 for code in codes:
-                    if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'ma']:
+                    if row[code + 'mmtm30'] == np.max(mmtm30_lst) and row[code] >= row[code + 'ma'] and row[code] >= row[code + 'ma7']:
                         pick = code
                         break
         elif row[last_pick + 'mmtm7'] not in mmtm7_lst:
