@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
         upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_close', ['code', 'date', 'close', 'mmtm_7', 'mmtm_15', 'mmtm_30', 'rsi_15', 'down_std_60'])
 
-        # df = df.tail(50)
+        df = df.tail(30)
 
         for index, row in df.iterrows():
             cursor.execute(upsert_sql, (code, index, float(row['close']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_30']), float(row['rsi_15']), float(row['down_std_60'])) * 2)
