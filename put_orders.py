@@ -217,6 +217,7 @@ if __name__ == "__main__":
         cancel_res = client.cancel_order(
                     symbol=pair_symbol,
                     orderId=order['orderId'])
+        time.sleep(0.1)
 
     if order_type == 'BUY':
         slowly_buy(client, pair_symbol, min_notional, round_size, 1)
