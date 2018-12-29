@@ -129,20 +129,12 @@ def slowly_buy(client, asset_symbol, pair_symbol, round_size, percent=1):
     print 'TOTAL WAIT TIME:', total_gap
 
 
-
 if __name__ == "__main__":
     config = xutils.getLocalConfigJson()
     api_key = config['api_key']
     api_secret = config['api_secret']
 
     client = Client(api_key, api_secret)
-
-    prices = client.get_all_tickers()
-
-    price_dict = {}
-
-    for item in prices:
-        price_dict[item['symbol']] = float(item['price'])
 
     min_notional_dict = {}
     lot_size_dict = {}
@@ -157,12 +149,12 @@ if __name__ == "__main__":
 
 
     # about buy/sell
-    pair_symbol = 'ETHUSDT'
+    pair_symbol = 'BTCUSDT'
     precision = round(np.log(lot_size_dict[pair_symbol])/np.log(10))
     if precision >= 0:
         round_size = 0
     else:
         round_size = int(-precision)
 
-    slowly_sell(client, 'ETH', pair_symbol, round_size)
+    slowly_sell(client, 'BTC', pair_symbol, round_size)
     # slowly_buy(client, 'BTC', pair_symbol, round_size, 1)
