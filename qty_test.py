@@ -111,16 +111,18 @@ def slowly_buy(client, asset_symbol, pair_symbol, round_size, percent=1):
             flag = False
         else:
             amount = med
-        amount = round(amount, round_size) - 0.1 ** round_size
+
+        quantity = amount / float(price)
+        quantity = round(quantity, round_size) - 0.1 ** round_size
 
         # amount: 花多少USDT/BTC等来买
         order = client.order_limit_buy(
             symbol=pair_symbol,
-            quantity=amount,
+            quantity=quantity,
             price=price)
 
-        print 'ORDER', pair_symbol, amount, price
-        balance = balance - amount
+        print 'ORDER', pair_symbol, quantity, quantity * float(price), price
+        balance = balance - quantity * float(price)
         time.sleep(gap)
         total_gap += gap
 
@@ -155,7 +157,7 @@ if __name__ == "__main__":
 
 
     # about buy/sell
-    pair_symbol = 'ETHBTC'
+    pair_symbol = 'ETHUSDT'
     precision = round(np.log(lot_size_dict[pair_symbol])/np.log(10))
     if precision >= 0:
         round_size = 0
@@ -163,4 +165,4 @@ if __name__ == "__main__":
         round_size = int(-precision)
 
     slowly_sell(client, 'ETH', pair_symbol, round_size)
-    # slowly_buy(client, 'BTC', pair_symbol, round_size)
+    # slowly_buy(client, 'BTC', pair_symbol, round_size, 1)
