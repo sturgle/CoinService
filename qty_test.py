@@ -48,7 +48,11 @@ def get_order_param(client, symb):
     return [med, lower, upper, gap]
 
 
-def slowly_sell(client, asset_symbol, pair_symbol, round_size, percent=1):
+def slowly_sell(client, pair_symbol, min_notional, round_size, percent=1):
+    if pair_symbol.endswith('USDT'):
+        asset_symbol = pair_symbol[:-4]
+    elif pair_symbol.endswith('BTC'):
+        asset_symbol = pair_symbol[:-3]
     info = client.get_asset_balance(asset=asset_symbol)
     balance = float(info['free'])
     balance = balance * percent
@@ -65,9 +69,13 @@ def slowly_sell(client, asset_symbol, pair_symbol, round_size, percent=1):
             if item['symbol'] == pair_symbol:
                 price = str(item['price'])
         print price
-        # 最后的就全部吧
+        # 最后部分一起
+        if balance * float(price) < min_notional:
+            print 'TOO SMALL BALANCE'
+            flag = False
+            break
         if balance - med < lower:
-            print 'LAST'
+            print 'LAST BALANCE'
             amount = balance
             flag = False
         else:
@@ -87,13 +95,17 @@ def slowly_sell(client, asset_symbol, pair_symbol, round_size, percent=1):
     print 'TOTAL WAIT TIME:', total_gap
 
 
-
-def slowly_buy(client, asset_symbol, pair_symbol, round_size, percent=1):
+# 从pair_symbol可以看出以什么计价（后缀），那么前面的就是quantity的数量单位
+def slowly_buy(client, pair_symbol, min_notional, round_size, percent=1):
+    if pair_symbol.endswith('USDT'):
+        asset_symbol = 'USDT'
+    elif pair_symbol.endswith('BTC'):
+        asset_symbol = 'BTC'
     info = client.get_asset_balance(asset=asset_symbol)
     balance = float(info['free'])
     balance = balance * percent
-    print 'BALANCE', balance
-    # sell
+    print 'BALANCE:', balance, asset_symbol
+
     total_gap = 0.0
     flag = True
     while flag:
@@ -103,30 +115,38 @@ def slowly_buy(client, asset_symbol, pair_symbol, round_size, percent=1):
         for item in prices:
             if item['symbol'] == pair_symbol:
                 price = str(item['price'])
-        print price
-        # 最后的就全部吧
-        if balance - med < lower:
-            print 'LAST'
-            amount = balance
+        print 'PRICE:', price
+        # 最后部分一起
+        # balance是以基础asset计价的
+        # balance比MIN_NOTIONAL小的话，会出错
+        if balance < min_notional:
+            print 'TOO SMALL BALANCE'
+            flag = False
+            break
+        if balance / float(price) - med < lower:
+            print 'LAST BALANCE'
+            amount = balance / float(price)
             flag = False
         else:
             amount = med
 
-        quantity = amount / float(price)
-        quantity = round(quantity, round_size) - 0.1 ** round_size
+        print 'AMOUNT:', amount
+        amount = round(amount, round_size) - 0.1 ** round_size
 
-        # amount: 花多少USDT/BTC等来买
+        print 'TRY:', pair_symbol, amount, amount * float(price), price
+
+        # amount: 买多少个单位
         order = client.order_limit_buy(
             symbol=pair_symbol,
-            quantity=quantity,
+            quantity=amount,
             price=price)
 
-        print 'ORDER', pair_symbol, quantity, quantity * float(price), price
-        balance = balance - quantity * float(price)
+        print 'ORDER:', pair_symbol, amount, amount * float(price), price
+        balance = balance - amount * float(price)
         time.sleep(gap)
         total_gap += gap
 
-    print 'TOTAL WAIT TIME:', total_gap
+    print 'TOTAL WAITING SECONDS:', total_gap
 
 
 if __name__ == "__main__":
@@ -156,5 +176,7 @@ if __name__ == "__main__":
     else:
         round_size = int(-precision)
 
-    slowly_sell(client, 'BTC', pair_symbol, round_size)
-    # slowly_buy(client, 'BTC', pair_symbol, round_size, 1)
+    min_notional = min_notional_dict[pair_symbol]
+
+    slowly_sell(client, pair_symbol, min_notional, round_size, 0.01)
+    slowly_buy(client, pair_symbol, min_notional, round_size, 0.01)
