@@ -48,16 +48,21 @@ def get_order_param(client, symb):
     return [med, lower, upper, gap]
 
 
-def slowly_sell(client, symbol, balance, round_size):
+def slowly_sell(client, asset_symbol, pair_symbol, round_size, percent=1):
+    info = client.get_asset_balance(asset=asset_symbol)
+    balance = float(info['free'])
+    balance = balance * percent
+    print balance
+
     # sell
     total_gap = 0.0
     flag = True
     while flag:
-        [med, lower, upper, gap] = get_order_param(client, symbol)
+        [med, lower, upper, gap] = get_order_param(client, pair_symbol)
         print [med, lower, upper, gap]
         prices = client.get_all_tickers()
         for item in prices:
-            if item['symbol'] == symbol:
+            if item['symbol'] == pair_symbol:
                 price = str(item['price'])
         print price
         # 最后的就全部吧
@@ -70,16 +75,58 @@ def slowly_sell(client, symbol, balance, round_size):
         amount = round(amount, round_size) - 0.1 ** round_size
 
         order = client.order_limit_sell(
-            symbol=symbol,
+            symbol=pair_symbol,
             quantity=amount,
             price=price)
 
-        print 'ORDER', symbol, amount, price
+        print 'ORDER', pair_symbol, amount, price
         balance = balance - amount
         time.sleep(gap)
         total_gap += gap
 
     print 'TOTAL WAIT TIME:', total_gap
+
+
+
+def slowly_buy(client, asset_symbol, pair_symbol, round_size, percent=1):
+    info = client.get_asset_balance(asset=asset_symbol)
+    balance = float(info['free'])
+    balance = balance * percent
+    print 'BALANCE', balance
+    # sell
+    total_gap = 0.0
+    flag = True
+    while flag:
+        [med, lower, upper, gap] = get_order_param(client, pair_symbol)
+        print [med, lower, upper, gap]
+        prices = client.get_all_tickers()
+        for item in prices:
+            if item['symbol'] == pair_symbol:
+                price = str(item['price'])
+        print price
+        # 最后的就全部吧
+        if balance - med < lower:
+            print 'LAST'
+            amount = balance
+            flag = False
+        else:
+            amount = med
+        amount = round(amount, round_size) - 0.1 ** round_size
+
+        # amount: 花多少USDT/BTC等来买
+        order = client.order_limit_buy(
+            symbol=pair_symbol,
+            quantity=amount,
+            price=price)
+
+        print 'ORDER', pair_symbol, amount, price
+        balance = balance - amount
+        time.sleep(gap)
+        total_gap += gap
+
+    print 'TOTAL WAIT TIME:', total_gap
+
+
 
 if __name__ == "__main__":
     config = xutils.getLocalConfigJson()
@@ -106,17 +153,14 @@ if __name__ == "__main__":
             if filter['filterType'] == 'LOT_SIZE':
                 lot_size_dict[s['symbol']] = float(filter['minQty'])
 
-    
-    asset_symbol = 'DASH'
-    symbol = asset_symbol + 'BTC'#'USDT'
-    info = client.get_asset_balance(asset=asset_symbol)
-    balance = float(info['free'])
-    print balance
 
-    precision = round(np.log(lot_size_dict[symbol])/np.log(10))
+    # about buy/sell
+    pair_symbol = 'ETHBTC'
+    precision = round(np.log(lot_size_dict[pair_symbol])/np.log(10))
     if precision >= 0:
         round_size = 0
     else:
         round_size = int(-precision)
 
-    slowly_sell(client, symbol, balance, round_size)
+    slowly_sell(client, 'ETH', pair_symbol, round_size)
+    # slowly_buy(client, 'BTC', pair_symbol, round_size)
