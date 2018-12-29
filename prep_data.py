@@ -30,10 +30,11 @@ if __name__ == "__main__":
 
     client = Client(api_key, api_secret)
 
+    # 现在是熊市，只从BTC和ETH里面选择
     codes = {
         'BTC': 'BTCUSDT',
         'ETH': 'ETHUSDT',
-        'EOS': 'EOSUSDT'
+        # 'LTC': 'LTCUSDT'
     }
 
     for code in codes:
@@ -82,6 +83,7 @@ if __name__ == "__main__":
             cursor.execute(upsert_sql, (code, index, float(row['close']), float(row['mmtm_7']), float(row['mmtm_15']), float(row['mmtm_30']), float(row['rsi_15']), float(row['down_std_60'])) * 2)
 
     conn.commit()
+
 
     # 选择今日币种
     df = pd.concat(s_lst, axis=1)
