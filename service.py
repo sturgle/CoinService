@@ -167,8 +167,8 @@ def get_bb_date():
 
 
 def get_cap_lst():
-    with open('ignore_lst.json') as symbol_file:
-        ignore_lst = json.load(symbol_file)['list']
+    with open('positive_lst.json') as symbol_file:
+        positive_lst = json.load(symbol_file)['list']
 
     conn = pool.connection()
 
@@ -178,7 +178,7 @@ def get_cap_lst():
         cap_lst = []
 
         for index, row in df.iterrows():
-            if row['code'] in ignore_lst:
+            if row['code'] not in positive_lst:
                 continue
             cap_lst.append([row['code'], row['cap'], str(row['date'])])
 
