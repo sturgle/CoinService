@@ -37,7 +37,7 @@ soup = BeautifulSoup(content, "html.parser")
 
 # coins = coins[:30]
 
-coints = ['bitcoin', 'ethereum', 'litecoin', 'eos', 'binance-coin']
+coins = ['bitcoin', 'ethereum', 'litecoin', 'eos', 'binance-coin']
 
 config = xutils.getLocalConfigJson()
 conn = xutils.getLocalConn()
