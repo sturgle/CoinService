@@ -28,14 +28,16 @@ url = "https://coinmarketcap.com/"
 content = urllib2.urlopen(url).read()
 soup = BeautifulSoup(content, "html.parser")
 
-coins = []
-for a in soup.find_all('a', {'class': 'currency-name-container'}, href=True):
-    link = a['href']
-    if link.startswith('/currencies/'):
-        # print link
-        coins.append(link.replace('currencies', '').replace('/', ''))
+# coins = []
+# for a in soup.find_all('a', {'class': 'currency-name-container'}, href=True):
+#     link = a['href']
+#     if link.startswith('/currencies/'):
+#         # print link
+#         coins.append(link.replace('currencies', '').replace('/', ''))
 
-coins = coins[:30]
+# coins = coins[:30]
+
+coints = ['bitcoin', 'ethereum', 'litecoin', 'eos', 'binance-coin']
 
 config = xutils.getLocalConfigJson()
 conn = xutils.getLocalConn()
