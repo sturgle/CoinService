@@ -30,11 +30,11 @@ if __name__ == "__main__":
 
     client = Client(api_key, api_secret)
 
-    # 现在是熊市，只从BTC和ETH里面选择
+    # 熊市只从BTC和ETH里面选择
     codes = {
         'BTC': 'BTCUSDT',
         'ETH': 'ETHUSDT',
-        # 'LTC': 'LTCUSDT'
+        'LTC': 'LTCUSDT'
     }
 
     for code in codes:
@@ -106,7 +106,8 @@ if __name__ == "__main__":
         df[code + 'ma'] = df[code].rolling(30).mean()
         df[code + 'ma'] = df[code + 'ma'].fillna(0)
 
-        df[code + 'xma'] = df[code].rolling(120).mean()
+        # df[code + 'xma'] = df[code].rolling(120).mean()
+        df[code + 'xma'] = df[code].rolling(100).mean()
         df[code + 'xma'] = df[code + 'xma'].fillna(0)
 
         df[code + 'mmtm1'] = np.log(df[code] / df[code].shift(1))
