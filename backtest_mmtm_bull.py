@@ -49,7 +49,7 @@ if __name__ == "__main__":
         df[code + '_mmtm'] = df[code + '_mmtm'].fillna(0)
         df[code + '_sig'] = 0
         df[code + '_logrtn'] = np.log(df[code] / df[code].shift(1))
-        df[code + '_xma'] = df[code].rolling(100).mean()
+        df[code + '_xma'] = df[code].rolling(120).mean()
         df[code + '_xma'] = df[code + '_xma'].fillna(0)
 
         for idx, row in df.iterrows():
