@@ -26,7 +26,6 @@ if __name__ == "__main__":
 
     client = Client(api_key, api_secret)
 
-    # 熊市只从BTC和ETH里面选择
     codes = {
         'BTC': 'BTCUSDT',
         'ETH': 'ETHUSDT',
@@ -122,7 +121,7 @@ if __name__ == "__main__":
 
     upsert_sql = xutils.buildUpsertOnDuplicateSql('coin_pick', ['date', 'pick', 'bull'])
 
-    # df = df.tail(30)
+    df = df.tail(120)
 
     for index, row in df.iterrows():
         cursor.execute(upsert_sql, (index, row['pick'], row['bull']) * 2)
