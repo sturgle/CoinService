@@ -77,6 +77,7 @@ if __name__ == "__main__":
         else:
             df.loc[idx, 'ETH_sig'] = 1
             if 'ETH' != sig:
+                last_dt = idx
                 df.loc[idx, 'cost'] = -0.01
             sig = 'ETH'
         if bull == 0 and row['masig'] == 2:
