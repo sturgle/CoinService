@@ -84,7 +84,7 @@ if __name__ == "__main__":
         elif bull == 1 and row['masig'] == 0:
             bull = 0
         df.loc[idx, 'bull'] = bull
-
+    df['bull'] = df['bull'].shift(1)
     for code in codes:
         df[code + '_sig'] = df[code + '_sig'].shift(1)
 
